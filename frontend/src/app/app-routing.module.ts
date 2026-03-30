@@ -21,16 +21,33 @@ const routes: Routes = [
   { path: '',        component: HomeComponent },
   { path: 'about',   component: AboutComponent },
   { path: 'services',component: ServicesComponent },
-  { path: 'products',component: ProductsComponent },
-  { path: 'book',    component: BookComponent, canActivate: [CustomerGuard] },
-  { path: 'contact', component: ContactComponent },
+  {
+    path: 'products',
+    loadChildren: () => import('./pages/products/products.module').then(m => m.ProductsModule)
+  },
+  {
+    path: 'book',
+    loadChildren: () => import('./pages/book/book.module').then(m => m.BookModule),
+    canActivate: [CustomerGuard]
+  },
+  {
+    path: 'contact',
+    loadChildren: () => import('./pages/contact/contact.module').then(m => m.ContactModule)
+  },
   { path: 'login',   component: LoginComponent },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [CustomerGuard] },
-  { path: 'admin', component: AdminDashboardComponent, canActivate: [AdminGuard] },
-  { path: 'profile', component: ProfileComponent, canActivate: [CustomerGuard] },
+  {
+    path: '', 
+    loadChildren: () => import('./pages/profile/user.module').then(m => m.UserModule),
+    canActivate: [CustomerGuard]
+  },
+  {
+    path: 'admin',
+    loadChildren: () => import('./pages/admin-dashboard/admin-dashboard.module').then(m => m.AdminDashboardModule),
+    canActivate: [AdminGuard]
+  },
   { path: 'terms',   component: TermsComponent },
   { path: 'privacy', component: PrivacyComponent },
- { path: '**',      redirectTo: '' }   // 404 fallback
+  { path: '**',      redirectTo: '' }   // 404 fallback
 ];
 
 @NgModule({

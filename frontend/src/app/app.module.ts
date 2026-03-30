@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule }    from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule }    from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormsModule }         from '@angular/forms';
 
@@ -10,38 +10,27 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './pages/home/home.component';
 import { AboutComponent } from './pages/about/about.component';
-import { ProductsComponent } from './pages/products/products.component';
-import { BookComponent } from './pages/book/book.component';
-import { ContactComponent } from './pages/contact/contact.component';
 import { LoginComponent } from './pages/login/login.component';
 import { TermsComponent } from './pages/terms/terms.component';
 import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { FooterComponent } from './shared/footer/footer.component';
-import { ProfileComponent } from './pages/profile/profile.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ServicesComponent } from './pages/services/services.component';
-import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { CookiePopupComponent } from './shared/cookie-popup/cookie-popup.component';
 import { A11yPanelComponent } from './shared/a11y-panel/a11y-panel.component';
+import { ErrorInterceptor } from './services/error.interceptor';
 
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
     AboutComponent,
-    ProductsComponent,
-    BookComponent,
-    ContactComponent,
     LoginComponent,
     TermsComponent,
     PrivacyComponent,
     NavbarComponent,
     FooterComponent,
-    ProfileComponent,
-    DashboardComponent,
     ServicesComponent,
-    AdminDashboardComponent,
     CookiePopupComponent,
     A11yPanelComponent
   ],
@@ -52,7 +41,9 @@ import { A11yPanelComponent } from './shared/a11y-panel/a11y-panel.component';
     ReactiveFormsModule,
     FormsModule,
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
