@@ -1,0 +1,172 @@
+<!-- privacy.component.html -->
+
+<section class="legal-hero">
+  <div class="legal-hero-content">
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last Updated: February 15, 2026</p>
+  </div>
+</section>
+
+<section class="legal-content">
+  <div class="legal-container">
+
+    <div class="legal-intro">
+      <p>FinishFino Cleaning Pros respects your privacy. This Privacy Policy explains what information we collect, how we use it, and the choices you have. By using our website or booking our services, you agree to this policy.</p>
+    </div>
+
+    <article class="legal-section" id="data-we-collect">
+      <h2>1. Information We Collect</h2>
+      <p>We collect information to deliver and improve our services:</p>
+      <ul>
+        <li><strong>Contact details:</strong> name, email, phone number, service address.</li>
+        <li><strong>Booking details:</strong> service type, property type, bedrooms/bathrooms, preferred dates and times, special instructions, add-ons.</li>
+        <li><strong>Payment details:</strong> deposit and balance amounts; payments are processed via third-party providers, and we do not store full card data.</li>
+        <li><strong>Usage data:</strong> device/browser info, IP address, and pages visited to keep our site reliable and secure.</li>
+      </ul>
+    </article>
+
+    <article class="legal-section" id="how-we-use">
+      <h2>2. How We Use Your Information</h2>
+      <ul>
+        <li>Schedule, confirm, and manage your cleaning bookings.</li>
+        <li>Process required deposits and balances.</li>
+        <li>Communicate confirmations, reminders, and service updates.</li>
+        <li>Improve our services, site performance, and customer support.</li>
+        <li>Prevent fraud, enforce terms, and comply with legal obligations.</li>
+      </ul>
+    </article>
+
+    <article class="legal-section" id="sharing">
+      <h2>3. How We Share Information</h2>
+      <p>We do not sell your personal information. We may share limited data with:</p>
+      <ul>
+        <li><strong>Payment processors</strong> to collect required deposits and balances.</li>
+        <li><strong>Service staff/contractors</strong> to perform scheduled cleanings.</li>
+        <li><strong>Vendors</strong> providing scheduling, email/SMS, analytics, or security tools.</li>
+        <li><strong>Authorities</strong> when required by law or to protect our rights and users.</li>
+      </ul>
+    </article>
+
+    <article class="legal-section" id="cookies">
+      <h2>4. Cookies & Tracking</h2>
+      <p>We use cookies and similar technologies to keep you signed in, remember preferences, analyze site traffic, and secure the site. You can control cookies through your browser settings or our dedicated settings below.</p>
+    </article>
+
+    <!-- Cookie Settings Section -->
+    <article class="legal-section cookie-settings-box" id="cookie-settings">
+      <h2>Cookie Settings</h2>
+      <p>Personalize your cookie experience. Essential cookies cannot be disabled as they are required for the website to function.</p>
+      
+      <div class="cookie-options-list">
+        <div class="cookie-option-item">
+          <div class="option-info">
+            <h4>Essential Cookies</h4>
+            <p>Necessary for the site to function, such as keeping you logged in and processing bookings.</p>
+          </div>
+          <div class="option-control">
+            <label class="switch disabled">
+              <input type="checkbox" checked disabled>
+              <span class="slider round"></span>
+            </label>
+            <span class="status-label">Always Active</span>
+          </div>
+        </div>
+
+        <div class="cookie-option-item">
+          <div class="option-info">
+            <h4>Analytics Cookies</h4>
+            <p>Help us understand how visitors interact with our website by collecting and reporting information anonymously.</p>
+          </div>
+          <div class="option-control">
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="preferences.analytics">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cookie-option-item">
+          <div class="option-info">
+            <h4>Marketing Cookies</h4>
+            <p>Used to track visitors across websites to display ads that are relevant and engaging for the individual user.</p>
+          </div>
+          <div class="option-control">
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="preferences.marketing">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cookie-option-item">
+          <div class="option-info">
+            <h4>Functional Cookies</h4>
+            <p>Enable enhanced functionality and personalization, such as remembering your preferences or live chat support.</p>
+          </div>
+          <div class="option-control">
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="preferences.functional">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cookie-settings-actions">
+        <div class="action-buttons-left">
+          <button class="btn-outline" (click)="acceptAll()">Accept All</button>
+          <button class="btn-outline" (click)="rejectNonEssential()">Reject Non-Essential</button>
+        </div>
+        <button class="btn-save" (click)="savePreferences()">Save Preferences</button>
+      </div>
+      
+      <div class="save-status" *ngIf="saveSuccess">
+        <span class="success-icon">✓</span> Preferences saved successfully!
+      </div>
+    </article>
+
+    <article class="legal-section" id="security">
+      <h2>5. Data Security</h2>
+      <p>We use encryption in transit (HTTPS), access controls, and vendor due diligence to protect your data. No method of transmission is 100% secure, so please contact us if you suspect unauthorized activity.</p>
+    </article>
+
+    <article class="legal-section" id="retention">
+      <h2>6. Data Retention</h2>
+      <p>We retain booking and payment records as needed for service fulfillment, accounting, and legal obligations. When information is no longer required, we delete or de-identify it in line with our retention schedules.</p>
+    </article>
+
+    <article class="legal-section" id="your-choices">
+      <h2>7. Your Choices & Rights</h2>
+      <ul>
+        <li>Access, update, or delete certain account or booking details by contacting us.</li>
+        <li>Opt out of marketing emails at any time; transactional messages will still be sent for active bookings.</li>
+        <li>Control cookies via browser settings.</li>
+      </ul>
+    </article>
+
+    <article class="legal-section" id="children">
+      <h2>8. Children’s Privacy</h2>
+      <p>Our services are not directed to children under 16. We do not knowingly collect data from children. If you believe a child provided data, please contact us to remove it.</p>
+    </article>
+
+    <article class="legal-section" id="updates">
+      <h2>9. Policy Updates</h2>
+      <p>We may update this policy to reflect changes in our practices or legal requirements. Updated versions will be posted here with a new “Last Updated” date.</p>
+    </article>
+
+    <article class="legal-section" id="contact">
+      <h2>10. Contact Us</h2>
+      <div class="contact-info-box">
+        <p><strong>FinishFino Cleaning Pros</strong></p>
+        <p>Email: <a href="mailto:finishfinocleaningpro@gmail.com">finishfinocleaningpro@gmail.com</a></p>
+        <p>Phone: (555) 123-4567</p>
+        <p>Address: 123 Clean Street, Suite 100</p>
+      </div>
+    </article>
+
+    <div class="legal-acknowledgment">
+      <p><strong>By using our services, you acknowledge that you have read and understood this Privacy Policy.</strong></p>
+    </div>
+
+  </div>
+</section>

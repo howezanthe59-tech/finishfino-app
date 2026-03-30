@@ -1,0 +1,91 @@
+<!-- terms.component.html -->
+
+<!-- Hero -->
+<section class="legal-hero">
+  <div class="legal-hero-content">
+    <h1>Terms and Conditions</h1>
+    <p class="last-updated">Last Updated: {{ lastUpdated }}</p>
+  </div>
+</section>
+
+<!-- Terms Content -->
+<section class="legal-content">
+  <div class="legal-container">
+
+    <div class="legal-intro">
+      <p>Welcome to FinishFino Cleaning Pros. These Terms and Conditions ("Terms") govern your use
+        of our website and services. By accessing our website or using our services, you agree to
+        be bound by these Terms. Please read them carefully.</p>
+    </div>
+
+    <!-- Dynamic Sections -->
+    <article class="legal-section" *ngFor="let section of sections">
+      <h2>{{ section.heading }}</h2>
+
+      <!-- Plain paragraphs (shown before items when both exist) -->
+      <ng-container *ngIf="section.paragraphs && !section.subsections">
+        <p *ngFor="let p of section.paragraphs">{{ p }}</p>
+      </ng-container>
+
+      <!-- Bullet list -->
+      <ul *ngIf="section.items">
+        <li *ngFor="let item of section.items">{{ item }}</li>
+      </ul>
+
+      <!-- Subsections (3.x, 6.x, etc.) -->
+      <ng-container *ngIf="section.subsections">
+        <ng-container *ngFor="let sub of section.subsections">
+          <h3>{{ sub.heading }}</h3>
+          <p *ngFor="let p of sub.paragraphs">{{ p }}</p>
+          <ul *ngIf="sub.items">
+            <li *ngFor="let item of sub.items">{{ item }}</li>
+          </ul>
+        </ng-container>
+      </ng-container>
+
+      <!-- Section 10: Privacy link inline -->
+      <ng-container *ngIf="section.heading.startsWith('10.')">
+        <p>
+          Your privacy is important to us. Our collection and use of personal information is
+          governed by our <a routerLink="/privacy">Privacy Policy</a>, which is incorporated
+          into these Terms by reference. By using our services, you consent to our privacy
+          practices as described in the Privacy Policy.
+        </p>
+      </ng-container>
+
+      <!-- Section 17: Contact info box -->
+      <ng-container *ngIf="section.heading.startsWith('17.')">
+        <div class="contact-info-box">
+          <p><strong>FinishFino Cleaning Pros</strong></p>
+          <p>Email: <a href="mailto:finishfinocleaningpro@gmail.com">finishfinocleaningpro@gmail.com</a></p>
+          <p>Phone: (555) 123-4567</p>
+          <p>Address: 123 Clean Street, Suite 100, City, State 12345</p>
+        </div>
+      </ng-container>
+
+    </article>
+
+    <div class="legal-acknowledgment">
+      <p><strong>By using our services, you acknowledge that you have read, understood, and agree
+        to be bound by these Terms and Conditions.</strong></p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Related Links -->
+<section class="related-legal">
+  <div class="related-legal-container">
+    <h2>Related Information</h2>
+    <div class="related-links">
+      <a
+        class="related-card"
+        *ngFor="let link of relatedLinks"
+        [routerLink]="link.route"
+      >
+        <h3>{{ link.icon }} {{ link.title }}</h3>
+        <p>{{ link.description }}</p>
+      </a>
+    </div>
+  </div>
+</section>

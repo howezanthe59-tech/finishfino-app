@@ -1,0 +1,144 @@
+<section class="profile-section">
+  <div class="profile-card">
+    <h1>Your Profile</h1>
+    <p>Keep your contact and service address up to date.</p>
+
+    <form [formGroup]="profileForm" (ngSubmit)="save()" novalidate>
+      <div class="error-banner" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+
+      <div class="avatar-row">
+        <div class="avatar">
+          <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" />
+          <ng-template #avatarFallback>
+            <span class="avatar-initials" aria-hidden="true">{{ initials }}</span>
+          </ng-template>
+        </div>
+
+        <div class="avatar-actions">
+          <div class="inline-actions">
+            <input
+              #avatarInput
+              class="file-input"
+              type="file"
+              accept="image/*"
+              (change)="onAvatarSelected($event)"
+            />
+            <button type="button" class="btn-secondary btn-small" (click)="avatarInput.click()">
+              Change photo
+            </button>
+            <button
+              *ngIf="hasAvatar"
+              type="button"
+              class="btn-danger-outline btn-small"
+              (click)="removePhoto()"
+            >
+              Remove
+            </button>
+          </div>
+          <p class="hint">JPG, PNG, or WebP (max 5MB).</p>
+        </div>
+      </div>
+
+      <label>Full Name<span class="required">*</span>
+        <input
+          type="text"
+          formControlName="fullName"
+          aria-required="true"
+          [class.is-invalid]="f['fullName'].invalid && f['fullName'].touched"
+          [attr.aria-invalid]="f['fullName'].invalid && f['fullName'].touched ? 'true' : null"
+          [attr.aria-describedby]="f['fullName'].invalid && f['fullName'].touched ? 'profile-fullname-error' : null"
+        />
+        <span
+          class="error-message"
+          *ngIf="f['fullName'].touched && f['fullName'].errors"
+          id="profile-fullname-error"
+          role="alert"
+        >
+          <ng-container *ngIf="f['fullName'].errors?.['required']">Full name is required.</ng-container>
+          <ng-container *ngIf="f['fullName'].errors?.['minlength']">Name must be at least 2 characters.</ng-container>
+        </span>
+      </label>
+
+      <label>Email<span class="required">*</span>
+        <input
+          type="email"
+          formControlName="email"
+          aria-required="true"
+          [class.is-invalid]="f['email'].invalid && f['email'].touched"
+          [attr.aria-invalid]="f['email'].invalid && f['email'].touched ? 'true' : null"
+          [attr.aria-describedby]="f['email'].invalid && f['email'].touched ? 'profile-email-error' : null"
+        />
+        <span
+          class="error-message"
+          *ngIf="f['email'].touched && f['email'].errors"
+          id="profile-email-error"
+          role="alert"
+        >
+          <ng-container *ngIf="f['email'].errors?.['required']">Email is required.</ng-container>
+          <ng-container *ngIf="f['email'].errors?.['email']">Please enter a valid email.</ng-container>
+        </span>
+      </label>
+
+      <label>Phone
+        <input type="tel" formControlName="phone" />
+      </label>
+
+      <label>Service Address
+        <textarea rows="3" formControlName="address"></textarea>
+      </label>
+
+      <button class="btn-primary" type="submit" [disabled]="saving">Save Profile</button>
+      <span class="saved-badge" *ngIf="saved">Saved</span>
+    </form>
+  </div>
+
+  <div class="history-grid">
+    <section class="history-card">
+      <header>
+        <h2>Booking History</h2>
+        <p>All bookings tied to your account.</p>
+      </header>
+      <div *ngIf="bookings.length; else noBookings">
+        <div class="history-item" *ngFor="let b of bookings">
+          <div>
+            <strong>{{ b.serviceType | titlecase }}</strong>
+            <p>{{ b.date | date:'mediumDate' }} · {{ b.time }}</p>
+            <p class="muted">{{ b.address || 'Service address on file' }}</p>
+          </div>
+          <div class="history-meta">
+            <span>Total: ${{ b.total.toFixed(2) }}</span>
+            <span class="status">Status: {{ b.status }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noBookings>
+        <p>No bookings yet.</p>
+        <a routerLink="/book" class="btn-primary small">Book a Service</a>
+      </ng-template>
+    </section>
+
+    <section class="history-card">
+      <header>
+        <h2>Order History</h2>
+        <p>All product orders tied to your account.</p>
+      </header>
+      <div *ngIf="orders.length; else noOrders">
+        <div class="history-item" *ngFor="let o of orders">
+          <div>
+            <strong>{{ o.items.length }} item{{ o.items.length === 1 ? '' : 's' }}</strong>
+            <p>{{ o.createdAt | date:'mediumDate' }}</p>
+            <p class="muted">Order #{{ o.id.slice(0, 8) }}</p>
+          </div>
+          <div class="history-meta">
+            <span>Total: ${{ o.total.toFixed(2) }}</span>
+            <span class="status">Status: {{ o.status }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noOrders>
+        <p>No orders yet.</p>
+        <a routerLink="/products" class="btn-primary small">Shop Products</a>
+      </ng-template>
+    </section>
+  </div>
+</section>

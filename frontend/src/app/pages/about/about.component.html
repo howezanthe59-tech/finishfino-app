@@ -1,0 +1,110 @@
+<!-- about.component.html -->
+
+<!-- Hero Section -->
+<section class="about-hero">
+  <div class="hero-overlay">
+    <h1>About FinishFino Cleaning Pros</h1>
+    <p>Excellence in cleaning services since day one</p>
+  </div>
+</section>
+
+<!-- About Content -->
+<section class="about-content">
+
+  <!-- Who We Are -->
+  <article class="about-section">
+    <h2>Who We Are</h2>
+    <p>FinishFino Cleaning Pros is a premier cleaning service dedicated to providing professional
+      and reliable residential, commercial, and janitorial cleaning solutions. With years of
+      experience and a team of trained professionals, we aim to make every space spotless and
+      hygienic, while maintaining the highest standards of service.</p>
+  </article>
+
+  <!-- Our Mission -->
+  <article class="about-section highlight-section">
+    <h2>Our Mission</h2>
+    <p>Our mission is to deliver cleaning services that exceed our customers' expectations.
+      We believe in reliability, trust, and attention to detail, ensuring that every client
+      experiences the satisfaction of a truly clean and comfortable space.</p>
+  </article>
+
+  <!-- Our Vision -->
+  <article class="about-section vision-section">
+    <h2>Our Vision</h2>
+    <p>Our vision is to be the most trusted and recognized cleaning service in the region —
+      a company synonymous with excellence, integrity, and innovation. We aspire to set the
+      benchmark for the cleaning industry by continuously raising our standards, adopting
+      sustainable practices, and building lasting relationships with every community we serve.
+      We see a future where every home and workspace shines, and where our clients feel proud
+      of the environments they live and work in.</p>
+  </article>
+
+  <!-- What We Do — Flip Cards -->
+  <article class="about-section" id="what-we-do">
+    <h2>What We Do</h2>
+    <div class="services-grid">
+
+      <div
+        class="flip-card"
+        *ngFor="let service of services; let i = index"
+        [class.flipped]="isFlipped(i)"
+        (click)="toggleFlip(i)"
+        role="button"
+        [attr.aria-label]="'Learn more about ' + service.title"
+        [attr.aria-pressed]="isFlipped(i)"
+        tabindex="0"
+        (keydown.enter)="toggleFlip(i)"
+        (keydown.space)="toggleFlip(i)"
+      >
+        <div class="flip-card-inner">
+
+          <!-- Front -->
+          <div class="flip-card-front">
+            <img
+              class="flip-front-img"
+              [src]="service.image"
+              [alt]="service.alt"
+            />
+            <div class="flip-front-overlay">
+              <h3>{{ service.title }}</h3>
+              <span class="flip-icon">↩</span>
+            </div>
+          </div>
+
+          <!-- Back -->
+          <div class="flip-card-back">
+            <div class="service-icon">{{ service.icon }}</div>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- Our Values -->
+  <article class="about-section">
+    <h2>Our Values</h2>
+    <div class="values-grid">
+      <div class="value-card" *ngFor="let value of values">
+        <h3>{{ value.title }}</h3>
+        <p>{{ value.description }}</p>
+      </div>
+    </div>
+  </article>
+
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>Ready to Experience the Difference?</h2>
+    <p>Join hundreds of satisfied customers who trust FinishFino for their cleaning needs.</p>
+    <div class="cta-buttons">
+      <a routerLink="/book" class="btn-primary">Book a Service</a>
+      <a routerLink="/contact" class="btn-outline">Get in Touch</a>
+    </div>
+  </div>
+</section>

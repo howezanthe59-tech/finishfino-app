@@ -1,0 +1,16 @@
+# Dependencies
+**/node_modules/
+
+# Frontend build/cache
+**/dist/
+**/.angular/
+
+# Secrets
+**/.env
+
+# Runtime artifacts
+backend/uploads/
+frontend/build_error*.log
+
+# Local backup metadata
+frontend/.git_backup_*/

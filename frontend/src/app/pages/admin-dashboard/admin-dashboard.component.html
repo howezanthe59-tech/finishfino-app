@@ -1,0 +1,594 @@
+<div class="admin-shell">
+  <aside class="admin-rail">
+    <div class="rail-brand">
+      <span class="brand-mark">FF</span>
+      <div>
+        <p class="brand-title">FinishFino</p>
+        <p class="brand-subtitle">Admin Console</p>
+      </div>
+    </div>
+    <nav class="rail-nav" role="tablist" (keydown)="onAdminTabKeydown($event)">
+      <button class="nav-item" id="admin-tab-overview" #adminTabOverview role="tab" [attr.aria-selected]="activeTab === 'overview'" [attr.aria-controls]="'admin-panel-overview'" [attr.tabindex]="activeTab === 'overview' ? '0' : '-1'" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">Overview</button>
+      <button class="nav-item" id="admin-tab-bookings" #adminTabBookings role="tab" [attr.aria-selected]="activeTab === 'bookings'" [attr.aria-controls]="'admin-panel-bookings'" [attr.tabindex]="activeTab === 'bookings' ? '0' : '-1'" [class.active]="activeTab === 'bookings'" (click)="setTab('bookings')">Bookings</button>
+      <button class="nav-item" id="admin-tab-orders" #adminTabOrders role="tab" [attr.aria-selected]="activeTab === 'orders'" [attr.aria-controls]="'admin-panel-orders'" [attr.tabindex]="activeTab === 'orders' ? '0' : '-1'" [class.active]="activeTab === 'orders'" (click)="setTab('orders')">Orders</button>
+      <button class="nav-item" id="admin-tab-customers" #adminTabCustomers role="tab" [attr.aria-selected]="activeTab === 'customers'" [attr.aria-controls]="'admin-panel-customers'" [attr.tabindex]="activeTab === 'customers' ? '0' : '-1'" [class.active]="activeTab === 'customers'" (click)="setTab('customers')">Customers</button>
+      <button class="nav-item" id="admin-tab-products" #adminTabProducts role="tab" [attr.aria-selected]="activeTab === 'products'" [attr.aria-controls]="'admin-panel-products'" [attr.tabindex]="activeTab === 'products' ? '0' : '-1'" [class.active]="activeTab === 'products'" (click)="setTab('products')">Products</button>
+    </nav>
+    <div class="rail-footer">
+      <span class="status-dot"></span>
+      <span>Live data</span>
+    </div>
+  </aside>
+
+  <main class="admin-workspace">
+    <header class="workspace-header" *ngIf="activeTab === 'overview'" id="admin-panel-overview" role="tabpanel" aria-labelledby="admin-tab-overview">
+      <div>
+        <p class="eyebrow">Operations</p>
+        <h1>Welcome back, {{ adminName || 'Admin' }}</h1>
+        <p class="subtext">Live snapshot of bookings, orders, and revenue.</p>
+      </div>
+      <div class="header-actions">
+        <div class="pill">
+          <span class="pill-label">Revenue</span>
+          <span class="pill-value">${{ totalRevenue.toFixed(2) }}</span>
+        </div>
+        <div class="pill neutral">
+          <span class="pill-label">Pending Bookings</span>
+          <span class="pill-value">{{ pendingBookings }}</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="stat-row" *ngIf="activeTab === 'overview'">
+      <div class="stat-panel">
+        <p>Total Bookings</p>
+        <h2>{{ totalBookings }}</h2>
+        <span>All time</span>
+      </div>
+      <div class="stat-panel">
+        <p>Total Orders</p>
+        <h2>{{ totalOrders }}</h2>
+        <span>All time</span>
+      </div>
+      <div class="stat-panel accent">
+        <p>Revenue</p>
+        <h2>${{ totalRevenue.toFixed(2) }}</h2>
+        <span>Collected from orders</span>
+      </div>
+    </section>
+
+    <section class="split-grid" *ngIf="activeTab === 'overview'">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Bookings Control</h3>
+            <p>Filter by user email or ID to review a single account.</p>
+          </div>
+          <div class="panel-actions">
+            <button class="btn-secondary small" (click)="clearFilters()">Reset</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="filter-field">
+            <label for="filterEmail">Customer Email</label>
+            <input
+              id="filterEmail"
+              type="email"
+              [(ngModel)]="filters.email"
+              placeholder="email@example.com"
+            />
+          </div>
+          <div class="filter-field">
+            <label for="filterUserId">User ID</label>
+            <input
+              id="filterUserId"
+              type="text"
+              [(ngModel)]="filters.userId"
+              placeholder="UUID"
+            />
+          </div>
+          <div class="filter-actions">
+            <button class="btn-primary small" (click)="applyFilters()">Apply</button>
+          </div>
+        </div>
+
+        <div class="status-line" *ngIf="loading">Loading bookings...</div>
+        <div class="status-line error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of bookings">
+                <td>{{ b.fullName }}</td>
+                <td class="muted">{{ b.email }}</td>
+                <td>{{ b.serviceType | titlecase }}</td>
+                <td>{{ b.date | date:'mediumDate' }}</td>
+                <td><span class="badge" [ngClass]="statusClass(b.status)">{{ b.status }}</span></td>
+                <td>${{ b.total.toFixed(2) }}</td>
+              </tr>
+              <tr *ngIf="!loading && !errorMessage && bookings.length === 0">
+                <td colspan="6" class="empty">No bookings found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Orders Stream</h3>
+            <p>Recent order activity across all customers.</p>
+          </div>
+        </div>
+
+        <div class="status-line" *ngIf="loadingOrders">Loading orders...</div>
+        <div class="status-line error" *ngIf="ordersError">{{ ordersError }}</div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>User ID</th>
+                <th>Items</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let o of orders">
+                <td>#{{ o.id.slice(0, 8) }}</td>
+                <td class="muted">{{ o.userId }}</td>
+                <td>{{ o.items.length }}</td>
+                <td>{{ o.createdAt | date:'mediumDate' }}</td>
+                <td><span class="badge pending">{{ o.status }}</span></td>
+                <td>${{ o.total.toFixed(2) }}</td>
+              </tr>
+              <tr *ngIf="!loadingOrders && !ordersError && orders.length === 0">
+                <td colspan="6" class="empty">No orders found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="timeline-grid" *ngIf="activeTab === 'overview'">
+      <div class="timeline-card">
+        <h3>Latest Bookings</h3>
+        <div *ngIf="recentBookings.length; else noRecentBookings">
+          <div class="timeline-item" *ngFor="let b of recentBookings">
+            <div class="dot"></div>
+            <div>
+              <strong>{{ b.fullName }}</strong>
+              <p>{{ b.serviceType | titlecase }} · {{ b.date | date:'mediumDate' }}</p>
+            </div>
+            <span class="timeline-amount">${{ b.total.toFixed(2) }}</span>
+          </div>
+        </div>
+        <ng-template #noRecentBookings>
+          <p class="muted">No recent bookings.</p>
+        </ng-template>
+      </div>
+
+      <div class="timeline-card">
+        <h3>Latest Orders</h3>
+        <div *ngIf="recentOrders.length; else noRecentOrders">
+          <div class="timeline-item" *ngFor="let o of recentOrders">
+            <div class="dot"></div>
+            <div>
+              <strong>Order #{{ o.id.slice(0, 6) }}</strong>
+              <p>{{ o.items.length }} items · {{ o.createdAt | date:'mediumDate' }}</p>
+            </div>
+            <span class="timeline-amount">${{ o.total.toFixed(2) }}</span>
+          </div>
+        </div>
+        <ng-template #noRecentOrders>
+          <p class="muted">No recent orders.</p>
+        </ng-template>
+      </div>
+    </section>
+    <section class="panel" *ngIf="activeTab === 'bookings'" id="admin-panel-bookings" role="tabpanel" aria-labelledby="admin-tab-bookings">
+      <div class="panel-header">
+        <div>
+          <h3>Bookings Control</h3>
+          <p>Filter by user email or ID to review a single account.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-secondary small" (click)="clearFilters()">Reset</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="filter-field">
+          <label for="filterEmailTab">Customer Email</label>
+          <input
+            id="filterEmailTab"
+            type="email"
+            [(ngModel)]="filters.email"
+            placeholder="email@example.com"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="filterUserIdTab">User ID</label>
+          <input
+            id="filterUserIdTab"
+            type="text"
+            [(ngModel)]="filters.userId"
+            placeholder="UUID"
+          />
+        </div>
+        <div class="filter-actions">
+          <button class="btn-primary small" (click)="applyFilters()">Apply</button>
+        </div>
+      </div>
+
+      <div class="status-line" *ngIf="loading">Loading bookings...</div>
+      <div class="status-line error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Service</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of bookings">
+              <td>{{ b.fullName }}</td>
+              <td class="muted">{{ b.email }}</td>
+              <td>{{ b.serviceType | titlecase }}</td>
+              <td>{{ b.date | date:'mediumDate' }}</td>
+              <td><span class="badge" [ngClass]="statusClass(b.status)">{{ b.status }}</span></td>
+              <td>${{ b.total.toFixed(2) }}</td>
+            </tr>
+            <tr *ngIf="!loading && !errorMessage && bookings.length === 0">
+              <td colspan="6" class="empty">No bookings found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'orders'" id="admin-panel-orders" role="tabpanel" aria-labelledby="admin-tab-orders">
+      <div class="panel-header">
+        <div>
+          <h3>Orders Stream</h3>
+          <p>Recent order activity across all customers.</p>
+        </div>
+      </div>
+
+      <div class="status-line" *ngIf="loadingOrders">Loading orders...</div>
+      <div class="status-line error" *ngIf="ordersError">{{ ordersError }}</div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>User ID</th>
+              <th>Items</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of orders">
+              <td>#{{ o.id.slice(0, 8) }}</td>
+              <td class="muted">{{ o.userId }}</td>
+              <td>{{ o.items.length }}</td>
+              <td>{{ o.createdAt | date:'mediumDate' }}</td>
+              <td><span class="badge pending">{{ o.status }}</span></td>
+              <td>${{ o.total.toFixed(2) }}</td>
+            </tr>
+            <tr *ngIf="!loadingOrders && !ordersError && orders.length === 0">
+              <td colspan="6" class="empty">No orders found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'customers'" id="admin-panel-customers" role="tabpanel" aria-labelledby="admin-tab-customers">
+      <div class="panel-header">
+        <div>
+          <h3>Customers</h3>
+          <p>All registered users in the system.</p>
+        </div>
+      </div>
+
+      <div class="status-line" *ngIf="loadingUsers">Loading customers...</div>
+      <div class="status-line error" *ngIf="usersError">{{ usersError }}</div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>{{ u.full_name }}</td>
+              <td class="muted">{{ u.email }}</td>
+              <td>{{ u.phone || '—' }}</td>
+              <td>{{ u.role }}</td>
+              <td>{{ u.created_at | date:'mediumDate' }}</td>
+            </tr>
+            <tr *ngIf="!loadingUsers && !usersError && users.length === 0">
+              <td colspan="5" class="empty">No customers found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel products-panel" *ngIf="activeTab === 'products'" id="admin-panel-products" role="tabpanel" aria-labelledby="admin-tab-products" (click)="closeCategoryPicker()">
+      <div class="panel-header">
+        <div>
+          <h3>Product Management</h3>
+          <p>Add, edit, and manage inventory in one place.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-primary small" type="button" (click)="openCreateProductModal()">Add Product</button>
+        </div>
+      </div>
+
+      <div class="filters products-filters">
+        <div class="filter-field">
+          <label for="productSearch">Search</label>
+          <input id="productSearch" type="text" [(ngModel)]="productQuery" placeholder="Search by product name" />
+        </div>
+
+        <div class="filter-field">
+          <label for="productCategory">Category</label>
+          <select id="productCategory" [(ngModel)]="productCategoryFilter">
+            <option value="all">All</option>
+            <option *ngFor="let c of productCategories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="productMinPrice">Min Price</label>
+          <input id="productMinPrice" type="number" min="0" step="0.01" [(ngModel)]="productPriceMin" placeholder="0.00" />
+        </div>
+
+        <div class="filter-field">
+          <label for="productMaxPrice">Max Price</label>
+          <input id="productMaxPrice" type="number" min="0" step="0.01" [(ngModel)]="productPriceMax" placeholder="99.99" />
+        </div>
+
+        <div class="filter-field">
+          <label for="productStatusFilter">Stock Status</label>
+          <select id="productStatusFilter" [(ngModel)]="productStatusFilter">
+            <option value="all">All</option>
+            <option value="in_stock">In Stock</option>
+            <option value="out_of_stock">Out of Stock</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button
+            class="btn-secondary small"
+            type="button"
+            (click)="productQuery=''; productCategoryFilter='all'; productStatusFilter='all'; productPriceMin=null; productPriceMax=null"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="status-line" *ngIf="loadingProducts">Loading products...</div>
+      <div class="status-line success" *ngIf="productsSuccess">{{ productsSuccess }}</div>
+      <div class="status-line error" *ngIf="productsError">{{ productsError }}</div>
+
+      <div class="table-wrap table-scroll">
+        <table class="data-table products-table">
+          <thead>
+            <tr>
+              <th class="col-image">Image</th>
+              <th>Product Name</th>
+              <th>Price</th>
+              <th>Category</th>
+              <th class="col-stock">Stock</th>
+              <th>Status</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filteredProducts">
+              <td class="cell-image">
+                <img *ngIf="p.image_url" class="thumb" [src]="p.image_url" [alt]="p.name" loading="lazy" />
+                <div *ngIf="!p.image_url" class="thumb placeholder" aria-hidden="true">{{ (p.name || '?').slice(0, 1) }}</div>
+              </td>
+              <td>
+                <strong>{{ p.name }}</strong>
+                <p class="muted">{{ p.description || 'No description' }}</p>
+                <p class="muted sku" *ngIf="p.sku">SKU: {{ p.sku }}</p>
+              </td>
+              <td>${{ (p.price_cents / 100).toFixed(2) }}</td>
+              <td class="cell-category">
+                <div class="category-cell" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="category-pill"
+                    [ngClass]="categoryBadgeClass(p.category)"
+                    [disabled]="categorySavingProductId === p.id"
+                    aria-haspopup="true"
+                    [attr.aria-expanded]="categoryEditorProductId === p.id"
+                    (click)="toggleCategoryPicker(p)"
+                  >
+                    {{ getCategoryLabel(p.category) }}
+                  </button>
+
+                  <div class="category-picker" *ngIf="categoryEditorProductId === p.id">
+                    <button
+                      type="button"
+                      class="category-option"
+                      *ngFor="let c of categoryPickerOptions"
+                      [ngClass]="categoryBadgeClass(c)"
+                      (click)="setProductCategory(p, c)"
+                    >
+                      {{ c }}
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td>{{ p.stock_quantity ?? 0 }}</td>
+              <td>
+                <span class="badge" [ngClass]="p.status === 'in_stock' ? 'stock-in' : 'stock-out'">
+                  {{ p.status === 'in_stock' ? 'In Stock' : 'Out of Stock' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn-secondary small" type="button" (click)="openEditProductModal(p)">Edit</button>
+                <button class="btn-danger small" type="button" [disabled]="deletingProductId === p.id" (click)="requestDeleteProduct(p)">
+                  {{ deletingProductId === p.id ? 'Deleting...' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!loadingProducts && !productsError && filteredProducts.length === 0">
+              <td colspan="7" class="empty">No products match your filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-overlay" *ngIf="productModalOpen" (click)="closeProductModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h4>{{ productModalMode === 'create' ? 'Add Product' : 'Edit Product' }}</h4>
+            <button type="button" class="modal-close" (click)="closeProductModal()" aria-label="Close modal">&times;</button>
+          </div>
+
+          <form #productForm="ngForm" class="modal-body" (ngSubmit)="saveProduct(productForm)">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="prodName">Product Name *</label>
+                <input id="prodName" name="name" type="text" required [(ngModel)]="productDraft.name" #nameCtrl="ngModel" />
+                <div class="field-error" *ngIf="productForm.submitted && nameCtrl.invalid">Product name is required.</div>
+              </div>
+
+              <div class="form-field">
+                <label for="prodSku">SKU (optional)</label>
+                <input id="prodSku" name="sku" type="text" [(ngModel)]="productDraft.sku" />
+              </div>
+
+              <div class="form-field full">
+                <label for="prodDesc">Description *</label>
+                <textarea id="prodDesc" name="description" required [(ngModel)]="productDraft.description" #descCtrl="ngModel"></textarea>
+                <div class="field-error" *ngIf="productForm.submitted && descCtrl.invalid">Description is required.</div>
+              </div>
+
+              <div class="form-field">
+                <label for="prodPrice">Price *</label>
+                <input id="prodPrice" name="price" type="number" required min="0.01" step="0.01" [(ngModel)]="productDraft.price" #priceCtrl="ngModel" />
+                <div class="field-error" *ngIf="productForm.submitted && priceCtrl.invalid">Price must be positive.</div>
+              </div>
+
+              <div class="form-field">
+                <label>Category</label>
+                <div class="category-readonly">
+                  <span class="category-pill readonly" [ngClass]="categoryBadgeClass(productDraft.category)">
+                    {{ getCategoryLabel(productDraft.category) }}
+                  </span>
+                  <p class="muted small">Edit category from the products table.</p>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="prodStock">Stock Quantity *</label>
+                <input id="prodStock" name="stock_quantity" type="number" required min="0" step="1" [(ngModel)]="productDraft.stock_quantity" #stockCtrl="ngModel" />
+                <div class="field-error" *ngIf="productForm.submitted && stockCtrl.invalid">Stock quantity is required.</div>
+              </div>
+
+              <div class="form-field">
+                <label for="prodStatus">Status *</label>
+                <select id="prodStatus" name="status" required [(ngModel)]="productDraft.status" #statusCtrl="ngModel">
+                  <option value="in_stock">In Stock</option>
+                  <option value="out_of_stock">Out of Stock</option>
+                </select>
+                <div class="field-error" *ngIf="productForm.submitted && statusCtrl.invalid">Status is required.</div>
+              </div>
+
+              <div class="form-field full">
+                <label for="prodImage">Product Image {{ productModalMode === 'create' ? '*' : '(optional)' }}</label>
+                <input id="prodImage" type="file" accept="image/*" (change)="onPrimaryImageChange($event)" />
+                <div class="field-error" *ngIf="productForm.submitted && productModalMode === 'create' && !primaryImageFile && !productDraft.image_url">
+                  Product image is required.
+                </div>
+                <div class="image-preview" *ngIf="primaryImagePreviewUrl || productDraft.image_url">
+                  <img class="preview" [src]="primaryImagePreviewUrl || (productDraft.image_url || '')" alt="Product image preview" />
+                </div>
+              </div>
+
+              <div class="form-field full">
+                <label for="prodAdditional">Additional Images (optional)</label>
+                <input id="prodAdditional" type="file" accept="image/*" multiple (change)="onAdditionalImagesChange($event)" />
+
+                <div class="image-chips" *ngIf="productDraft.additional_images.length || newAdditionalImageFiles.length">
+                  <div class="chip" *ngFor="let url of productDraft.additional_images">
+                    <span class="chip-label">{{ url.split('/').pop() }}</span>
+                    <button type="button" class="chip-remove" (click)="removeExistingAdditionalImage(url)" aria-label="Remove image">&times;</button>
+                  </div>
+
+                  <div class="chip" *ngFor="let f of newAdditionalImageFiles; let i = index">
+                    <span class="chip-label">{{ f.name }}</span>
+                    <button type="button" class="chip-remove" (click)="removeNewAdditionalImage(i)" aria-label="Remove image">&times;</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary small" type="button" (click)="closeProductModal()">Cancel</button>
+              <button class="btn-primary small" type="submit" [disabled]="savingProduct">
+                {{ savingProduct ? 'Saving...' : (productModalMode === 'create' ? 'Create Product' : 'Save Changes') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="modal-overlay" *ngIf="deleteConfirmOpen" (click)="cancelDeleteProduct()">
+        <div class="modal-card small" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h4>Delete Product</h4>
+            <button type="button" class="modal-close" (click)="cancelDeleteProduct()" aria-label="Close modal">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <p>Are you sure you want to delete <strong>{{ productPendingDelete?.name }}</strong>?</p>
+            <div class="modal-actions">
+              <button class="btn-secondary small" type="button" (click)="cancelDeleteProduct()">Cancel</button>
+              <button class="btn-danger small" type="button" (click)="confirmDeleteProduct()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

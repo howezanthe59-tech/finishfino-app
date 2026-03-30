@@ -1,0 +1,77 @@
+<section class="dash-section">
+  <div class="dash-header">
+    <div class="dash-welcome">
+      <div class="welcome-avatar">
+        <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" />
+        <ng-template #avatarFallback>
+          <span class="welcome-initials" aria-hidden="true">{{ initials }}</span>
+        </ng-template>
+      </div>
+      <div>
+        <h1>Welcome{{ firstName ? ', ' + firstName : '' }}</h1>
+        <p>View your profile and recent bookings.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <section class="card">
+      <header><h3>Your Profile</h3></header>
+      <div *ngIf="profile; else noProfile">
+        <p><strong>Name:</strong> {{ profile.fullName }}</p>
+        <p><strong>Email:</strong> {{ profile.email }}</p>
+        <p *ngIf="profile.phone"><strong>Phone:</strong> {{ profile.phone }}</p>
+        <p *ngIf="profile.address"><strong>Service Address:</strong> {{ profile.address }}</p>
+        <a routerLink="/profile" class="btn-secondary small">Edit Profile</a>
+      </div>
+      <ng-template #noProfile>
+        <p>Complete your profile to speed up future bookings.</p>
+        <a routerLink="/profile" class="btn-primary small">Create Profile</a>
+      </ng-template>
+    </section>
+
+    <section class="card bookings-card">
+      <header><h3>Recent Bookings</h3></header>
+      <div *ngIf="bookings.length; else emptyBookings">
+        <div class="booking-item" *ngFor="let b of bookings">
+          <div>
+            <strong>{{ b.serviceType | titlecase }}</strong>
+            <p>{{ b.date | date:'mediumDate' }} · {{ b.time }}</p>
+            <p class="muted">{{ b.address || 'Service address on file' }}</p>
+          </div>
+          <div class="booking-totals">
+            <span>Total: ${{ b.total.toFixed(2) }}</span>
+            <span>Deposit: ${{ b.deposit.toFixed(2) }}</span>
+            <span>Balance: ${{ b.balance.toFixed(2) }}</span>
+            <span class="status">Status: {{ b.status }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyBookings>
+        <p>No bookings yet.</p>
+        <a routerLink="/book" class="btn-primary small">Book a Service</a>
+      </ng-template>
+    </section>
+
+    <section class="card orders-card">
+      <header><h3>Recent Orders</h3></header>
+      <div *ngIf="orders.length; else emptyOrders">
+        <div class="booking-item" *ngFor="let o of orders">
+          <div>
+            <strong>{{ o.items.length }} item{{ o.items.length === 1 ? '' : 's' }}</strong>
+            <p>{{ o.createdAt | date:'mediumDate' }}</p>
+            <p class="muted">Order #{{ o.id.slice(0, 8) }}</p>
+          </div>
+          <div class="booking-totals">
+            <span>Total: ${{ o.total.toFixed(2) }}</span>
+            <span class="status">Status: {{ o.status }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyOrders>
+        <p>No orders yet.</p>
+        <a routerLink="/products" class="btn-primary small">Shop Products</a>
+      </ng-template>
+    </section>
+  </div>
+</section>

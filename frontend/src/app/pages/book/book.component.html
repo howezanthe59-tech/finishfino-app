@@ -1,0 +1,508 @@
+<section class="booking-page-wrapper">
+  <header class="booking-page-header">
+    <div class="header-content">
+      <h1>Book Your <span class="header-accent">Cleaning Service</span></h1>
+      <p>Secure your preferred slot instantly. Fill out the details below to receive an accurate quote.</p>
+    </div>
+  </header>
+
+  <div class="booking-layout">
+    <!-- Main Form Section -->
+    <div class="booking-main">
+      <div class="inline-banner success" *ngIf="lastConfirmation">
+        <span class="icon">✓</span>
+        {{ lastConfirmation }}
+      </div>
+      
+      <p class="form-notice" *ngIf="!lastConfirmation">
+        Fields marked with <span class="required">*</span> are required.
+      </p>
+
+      <form [formGroup]="bookingForm" novalidate class="booking-form" *ngIf="!lastConfirmation">
+        
+        <!-- Step 1: Contact Details -->
+        <div class="form-card" *ngIf="currentStep === 1">
+          <div class="card-header">
+            <span class="step-indicator">1/6</span>
+            <div>
+              <h2>Contact Details</h2>
+              <p>How we can reach you to confirm your booking.</p>
+            </div>
+          </div>
+          <div class="card-body form-grid">
+            <label class="field">
+              <span class="label-text">Full Name<span class="required">*</span></span>
+              <input
+                type="text"
+                formControlName="fullName"
+                placeholder="Jane Doe"
+                [class.is-invalid]="submitted && f['fullName'].errors"
+                [attr.aria-invalid]="submitted && f['fullName'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['fullName'].errors ? 'book-fullname-error' : null"
+              />
+              <span class="field-error" *ngIf="submitted && f['fullName'].errors" id="book-fullname-error">
+                <ng-container *ngIf="f['fullName'].hasError('required')">Please enter your full name.</ng-container>
+                <ng-container *ngIf="f['fullName'].hasError('detailMismatch')">Invalid details.</ng-container>
+              </span>
+            </label>
+            <label class="field">
+              <span class="label-text">Email<span class="required">*</span></span>
+              <input
+                type="email"
+                formControlName="email"
+                placeholder="jane@email.com"
+                [class.is-invalid]="submitted && f['email'].errors"
+                [attr.aria-invalid]="submitted && f['email'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['email'].errors ? 'book-email-error' : null"
+              />
+              <span class="field-error" *ngIf="submitted && f['email'].errors" id="book-email-error">
+                <ng-container *ngIf="f['email'].hasError('required')">Please enter a valid email.</ng-container>
+                <ng-container *ngIf="f['email'].hasError('detailMismatch')">Invalid details.</ng-container>
+              </span>
+            </label>
+            <label class="field">
+              <span class="label-text">Phone<span class="required">*</span></span>
+              <input
+                type="tel"
+                formControlName="phone"
+                placeholder="(555) 123-4567"
+                [class.is-invalid]="submitted && f['phone'].errors"
+                [attr.aria-invalid]="submitted && f['phone'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['phone'].errors ? 'book-phone-error' : null"
+              />
+              <span class="field-error" *ngIf="submitted && f['phone'].errors" id="book-phone-error">
+                <ng-container *ngIf="f['phone'].hasError('required')">Please enter a phone number.</ng-container>
+                <ng-container *ngIf="f['phone'].hasError('detailMismatch')">Invalid details.</ng-container>
+              </span>
+            </label>
+            
+            <div class="step-navigation">
+              <button type="button" class="btn-primary" (click)="nextStep()">Next Step →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Service Address -->
+        <div class="form-card" *ngIf="currentStep === 2">
+          <div class="card-header">
+            <span class="step-indicator">2/6</span>
+            <div>
+              <h2>Service Address</h2>
+              <p>Where should our cleaning team arrive?</p>
+            </div>
+          </div>
+          <div class="card-body form-grid">
+            <label class="field full-span">
+              <span class="label-text">Street Address<span class="required">*</span></span>
+              <input
+                type="text"
+                formControlName="street"
+                placeholder="123 Clean Street"
+                [class.is-invalid]="submitted && f['street'].errors"
+                [attr.aria-invalid]="submitted && f['street'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['street'].errors ? 'book-street-error' : null"
+              />
+              <span class="field-error" *ngIf="submitted && f['street'].errors" id="book-street-error">Street address is required.</span>
+            </label>
+            <label class="field">
+              <span class="label-text">Apartment / Unit</span>
+              <input type="text" formControlName="unit" placeholder="Apt 4B (Optional)" />
+            </label>
+            <label class="field">
+              <span class="label-text">Parish<span class="required">*</span></span>
+              <div class="custom-select-wrapper" [class.is-invalid]="submitted && f['parish'].errors">
+                <select
+                  formControlName="parish"
+                  [attr.aria-invalid]="submitted && f['parish'].errors ? 'true' : null"
+                  [attr.aria-describedby]="submitted && f['parish'].errors ? 'book-parish-error' : null"
+                >
+                  <option value="">Select a parish...</option>
+                  <option *ngFor="let parish of parishes" [value]="parish">{{ parish }}</option>
+                </select>
+              </div>
+              <span class="field-error" *ngIf="submitted && f['parish'].errors" id="book-parish-error">Parish is required.</span>
+            </label>
+            <label class="field">
+              <span class="label-text">City / Town<span class="required">*</span></span>
+              <div class="custom-select-wrapper" [class.is-invalid]="submitted && f['city'].errors">
+                <select
+                  formControlName="city"
+                  [attr.aria-invalid]="submitted && f['city'].errors ? 'true' : null"
+                  [attr.aria-describedby]="submitted && f['city'].errors ? 'book-city-error' : null"
+                >
+                  <option value="">Select a city...</option>
+                  <option *ngFor="let city of availableCities" [value]="city">{{ city }}</option>
+                </select>
+              </div>
+              <span class="field-error" *ngIf="submitted && f['city'].errors" id="book-city-error">City is required.</span>
+            </label>
+            
+            <div class="step-navigation full-span mt-3">
+              <button type="button" class="btn-text" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn-primary" (click)="nextStep()">Next Step →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Service & Property Details -->
+        <div class="form-card" *ngIf="currentStep === 3">
+          <div class="card-header">
+            <span class="step-indicator">3/6</span>
+            <div>
+              <h2>Service Details</h2>
+              <p>Help us understand the scope of the cleaning needed.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid mb-4">
+              <label class="field">
+                <span class="label-text">Service Type<span class="required">*</span></span>
+                <div class="custom-select-wrapper" [class.is-invalid]="submitted && f['serviceType'].errors">
+                  <select
+                    formControlName="serviceType"
+                    [attr.aria-invalid]="submitted && f['serviceType'].errors ? 'true' : null"
+                    [attr.aria-describedby]="submitted && f['serviceType'].errors ? 'book-service-type-error' : null"
+                  >
+                    <option value="">Select a service...</option>
+                    <option value="residential">Residential Cleaning</option>
+                    <option value="commercial">Commercial Cleaning</option>
+                    <option value="janitorial">Janitorial Services</option>
+                  </select>
+                </div>
+                <span class="field-error" *ngIf="submitted && f['serviceType'].errors" id="book-service-type-error">Please select a service.</span>
+              </label>
+
+              <label class="field" *ngIf="bookingForm.value.serviceType === 'residential'">
+                <span class="label-text">Cleaning Level</span>
+                <div class="custom-select-wrapper">
+                  <select formControlName="cleaningLevel">
+                    <option value="standard">Standard Cleaning</option>
+                    <option value="deep">Deep Cleaning</option>
+                  </select>
+                </div>
+              </label>
+
+              <label class="field" *ngIf="bookingForm.value.serviceType === 'commercial' || bookingForm.value.serviceType === 'janitorial'">
+                <span class="label-text">Service Size</span>
+                <div class="custom-select-wrapper">
+                  <select formControlName="serviceSize">
+                    <option value="small">Small Facility</option>
+                    <option value="medium">Medium Facility</option>
+                    <option value="large">Large Facility</option>
+                  </select>
+                </div>
+              </label>
+              
+              <label class="field">
+                <span class="label-text">Property Type<span class="required">*</span></span>
+                <div class="custom-select-wrapper">
+                  <select formControlName="propertyType">
+                    <option value="house">House</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="office">Office / Commercial</option>
+                  </select>
+                </div>
+              </label>
+            </div>
+
+            <div class="property-counters">
+              <label class="counter-field">
+                <span class="label-text">Bedrooms</span>
+                <div class="counter-input">
+                  <button type="button" (click)="f['bedrooms'].setValue(f['bedrooms'].value > 0 ? f['bedrooms'].value - 1 : 0)">-</button>
+                  <input type="number" min="0" formControlName="bedrooms" />
+                  <button type="button" (click)="f['bedrooms'].setValue(f['bedrooms'].value + 1)">+</button>
+                </div>
+              </label>
+              <label class="counter-field">
+                <span class="label-text">Bathrooms</span>
+                <div class="counter-input">
+                  <button type="button" (click)="f['bathrooms'].setValue(f['bathrooms'].value > 0 ? f['bathrooms'].value - 1 : 0)">-</button>
+                  <input type="number" min="0" formControlName="bathrooms" />
+                  <button type="button" (click)="f['bathrooms'].setValue(f['bathrooms'].value + 1)">+</button>
+                </div>
+              </label>
+              <label class="field size-input">
+                <span class="label-text">Est. Size (sqft)</span>
+                <input type="number" min="0" formControlName="sizeSqft" placeholder="Optional" />
+              </label>
+            </div>
+
+            <div class="step-navigation full-span mt-4">
+              <button type="button" class="btn-text" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn-primary" (click)="nextStep()">Next Step →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Schedule -->
+        <div class="form-card" *ngIf="currentStep === 4">
+          <div class="card-header">
+            <span class="step-indicator">4/6</span>
+            <div>
+              <h2>Schedule</h2>
+              <p>When would you like us to arrive?</p>
+            </div>
+          </div>
+          <div class="card-body form-grid">
+            <label class="field">
+              <span class="label-text">Preferred Date<span class="required">*</span></span>
+              <input
+                type="date"
+                formControlName="date"
+                [class.is-invalid]="submitted && f['date'].errors"
+                [attr.aria-invalid]="submitted && f['date'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['date'].errors ? 'book-date-error' : null"
+              />
+              <span class="field-error" *ngIf="submitted && f['date'].errors" id="book-date-error">Please choose a date.</span>
+            </label>
+            <label class="field">
+              <span class="label-text">Preferred Time Window<span class="required">*</span></span>
+              <div class="custom-select-wrapper" [class.is-invalid]="submitted && f['time'].errors">
+                <select
+                  formControlName="time"
+                  [attr.aria-invalid]="submitted && f['time'].errors ? 'true' : null"
+                  [attr.aria-describedby]="submitted && f['time'].errors ? 'book-time-error' : null"
+                >
+                  <option value="">Select a time...</option>
+                  <option value="morning">Morning (8am - 12pm)</option>
+                  <option value="afternoon">Afternoon (12pm - 4pm)</option>
+                  <option value="evening">Evening (4pm - 8pm)</option>
+                </select>
+              </div>
+              <span class="field-error" *ngIf="submitted && f['time'].errors" id="book-time-error">Please select a time window.</span>
+            </label>
+
+            <div class="step-navigation full-span mt-3">
+              <button type="button" class="btn-text" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn-primary" (click)="nextStep()">Next Step →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Add-ons & Products -->
+        <div class="form-card" *ngIf="currentStep === 5">
+          <div class="card-header">
+            <span class="step-indicator">5/6</span>
+            <div>
+              <h2>Customize Your Clean</h2>
+              <p>Select products and choose optional add-ons.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            
+            <div class="sub-section">
+              <h3>Preferred Cleaning Products <span class="required">*</span></h3>
+              <p class="sub-text">Please select at least one product line for us to use.</p>
+              
+              <div
+                class="product-pills"
+                role="group"
+                [class.is-invalid]="submitted && f['productSelection'].errors"
+                [attr.aria-invalid]="submitted && f['productSelection'].errors ? 'true' : null"
+                [attr.aria-describedby]="submitted && f['productSelection'].errors ? 'book-products-error' : null"
+              >
+                <button
+                  type="button"
+                  class="pill-btn"
+                  *ngFor="let product of productOptions"
+                  [class.selected]="f['productSelection'].value?.includes(product)"
+                  [attr.aria-pressed]="f['productSelection'].value?.includes(product)"
+                  (click)="toggleProduct(product)"
+                >
+                  <span class="pill-check" *ngIf="f['productSelection'].value?.includes(product)">✓</span>
+                  {{ product }}
+                </button>
+              </div>
+              <span class="field-error d-block mt-2" *ngIf="submitted && f['productSelection'].errors" id="book-products-error">Please select at least one product.</span>
+            </div>
+
+            <div class="separator"></div>
+
+            <div class="sub-section" formGroupName="addOns">
+              <h3>Extra Services (Optional)</h3>
+              <div class="addon-grid">
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.inside_fridge')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="inside_fridge">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Inside Fridge</span>
+                    <span class="addon-price">+$35</span>
+                  </div>
+                </label>
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.inside_oven')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="inside_oven">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Inside Oven</span>
+                    <span class="addon-price">+$30</span>
+                  </div>
+                </label>
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.laundry')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="laundry">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Laundry</span>
+                    <span class="addon-price">+$25</span>
+                  </div>
+                </label>
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.windows')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="windows">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Interior Windows</span>
+                    <span class="addon-price">+$40</span>
+                  </div>
+                </label>
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.deep_clean')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="deep_clean">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Deep Clean Focus</span>
+                    <span class="addon-price">+$60</span>
+                  </div>
+                </label>
+                <label class="addon-card" [class.active]="bookingForm.get('addOns.pets')?.value">
+                  <div class="addon-checkbox">
+                    <input type="checkbox" formControlName="pets">
+                    <span class="checkmark"></span>
+                  </div>
+                  <div class="addon-info">
+                    <span class="addon-name">Pet Hair Extra</span>
+                    <span class="addon-price">+$20</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <div class="sub-section">
+              <h3>Special Instructions</h3>
+              <label class="field full-span">
+                <textarea rows="3" formControlName="instructions" placeholder="Gate codes, pet information, parking instructions, or specific focus areas..."></textarea>
+              </label>
+            </div>
+
+            <div class="step-navigation mt-4">
+              <button type="button" class="btn-text" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn-primary" (click)="nextStep()">Review Booking →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 6: Review & Confirm -->
+        <div class="form-card review-step-card" *ngIf="currentStep === 6">
+          <div class="card-header">
+            <span class="step-indicator">6/6</span>
+            <div>
+              <h2>Review Your Booking</h2>
+              <p>Please confirm all details are correct before submitting your request.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            
+            <div class="review-grid">
+              <!-- Contact Review -->
+              <div class="review-block">
+                <div class="review-block-header">
+                  <h4>Contact Info</h4>
+                  <button type="button" class="btn-edit" (click)="goToStep(1)">Edit</button>
+                </div>
+                <div class="review-block-content">
+                  <p><strong>Name:</strong> {{ bookingForm.value.fullName }}</p>
+                  <p><strong>Email:</strong> {{ bookingForm.value.email }}</p>
+                  <p><strong>Phone:</strong> {{ bookingForm.value.phone }}</p>
+                </div>
+              </div>
+
+              <!-- Address Review -->
+              <div class="review-block">
+                <div class="review-block-header">
+                  <h4>Service Address</h4>
+                  <button type="button" class="btn-edit" (click)="goToStep(2)">Edit</button>
+                </div>
+                <div class="review-block-content">
+                  <p>{{ bookingForm.value.street }}<span *ngIf="bookingForm.value.unit">, {{ bookingForm.value.unit }}</span></p>
+                  <p>{{ bookingForm.value.city }}, {{ bookingForm.value.parish }}</p>
+                </div>
+              </div>
+
+              <!-- Service Review -->
+              <div class="review-block">
+                <div class="review-block-header">
+                  <h4>Service Details</h4>
+                  <button type="button" class="btn-edit" (click)="goToStep(3)">Edit</button>
+                </div>
+                <div class="review-block-content">
+                  <p><strong>Type:</strong> {{ (bookingForm.value.serviceType || 'Not Selected') | titlecase }}</p>
+                  <p><strong>Property:</strong> {{ bookingForm.value.bedrooms }} Bed, {{ bookingForm.value.bathrooms }} Bath {{ bookingForm.value.propertyType | titlecase }}</p>
+                  <p *ngIf="bookingForm.value.sizeSqft"><strong>Size:</strong> {{ bookingForm.value.sizeSqft }} sqft</p>
+                </div>
+              </div>
+
+              <!-- Schedule Review -->
+              <div class="review-block">
+                <div class="review-block-header">
+                  <h4>Schedule</h4>
+                  <button type="button" class="btn-edit" (click)="goToStep(4)">Edit</button>
+                </div>
+                <div class="review-block-content">
+                  <p><strong>Date:</strong> {{ bookingForm.value.date | date:'longDate' }}</p>
+                  <p><strong>Time:</strong> {{ bookingForm.value.time | titlecase }} Window</p>
+                </div>
+              </div>
+
+              <!-- Customization Review -->
+              <div class="review-block">
+                <div class="review-block-header">
+                  <h4>Customization & Products</h4>
+                  <button type="button" class="btn-edit" (click)="goToStep(5)">Edit</button>
+                </div>
+                <div class="review-block-content">
+                  <p *ngIf="selectedProducts.length > 0">
+                    <strong>Products:</strong>
+                    <span *ngFor="let p of selectedProducts; let isLast = last">{{ p.name }}{{ isLast ? '' : ', ' }}</span>
+                  </p>
+                  <p *ngIf="selectedAddOns.length > 0">
+                    <strong>Extra Add-ons:</strong>
+                    <span *ngFor="let a of selectedAddOns; let isLast = last">{{ a.name }}{{ isLast ? '' : ', ' }}</span>
+                  </p>
+                  <p *ngIf="bookingForm.value.instructions">
+                    <strong>Instructions:</strong> {{ bookingForm.value.instructions }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-navigation mt-4">
+              <button type="button" class="btn-text" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn-pay btn-large checkout-btn" (click)="confirmAndPayDeposit()">Submit Booking Request →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions-mobile">
+          <div class="checkout-validation" *ngIf="submitted && bookingForm.invalid">
+            Please complete all required fields above to continue.
+          </div>
+        </div>
+
+      </form>
+      
+      <div class="completed-actions" *ngIf="lastConfirmation">
+        <button class="btn-primary btn-large" (click)="beginNewBooking()">Start a New Booking</button>
+      </div>
+    </div>
+  </div>
+</section>

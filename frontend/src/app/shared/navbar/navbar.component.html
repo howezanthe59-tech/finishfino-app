@@ -1,0 +1,49 @@
+<header class='site-header'>
+  <div class='logo'>
+    <!-- Use routerLink instead of href for internal links -->
+    <a routerLink='/' aria-label='FinishFino Cleaning Pros Home'>
+      <img src='assets/images/finishfino_logo-removebg-preview.png'
+           alt='FinishFino Cleaning Pros logo' class='site-logo-img'>
+    </a>
+  </div>
+
+  <button class='mobile-menu-toggle'
+          type='button'
+          (click)='toggleMenu()'
+          [attr.aria-expanded]='menuOpen'
+          [attr.aria-label]="menuOpen ? 'Close main menu' : 'Open main menu'"
+          aria-controls='main-navigation'>
+    <span></span><span></span><span></span>
+  </button>
+
+  <nav id='main-navigation' [class.active]='menuOpen' aria-label='Main navigation'>
+    <ul>
+      <li><a routerLink='/'         routerLinkActive='active' [routerLinkActiveOptions]='{exact:true}' (click)="menuOpen = false">Home</a></li>
+      <li><a routerLink='/about'    routerLinkActive='active' (click)="menuOpen = false">About Us</a></li>
+      <li><a routerLink='/services' routerLinkActive='active' (click)="menuOpen = false">Services</a></li>
+      <li><a routerLink='/products' routerLinkActive='active' (click)="menuOpen = false">Products</a></li>
+      <li><a routerLink='/contact'  routerLinkActive='active' (click)="menuOpen = false">Contact</a></li>
+      <li *ngIf="isAdmin()"><a routerLink='/admin' routerLinkActive='active' (click)="menuOpen = false">Admin</a></li>
+    </ul>
+  </nav>
+
+  <div class='header-right' *ngIf="isLoggedIn(); else loginLink">
+    <button type="button" class='header-login-btn logged-in' (click)="goDashboard()" aria-label="Go to dashboard">
+      <span>Hi, {{ firstName || 'Customer' }}</span>
+    </button>
+    <a *ngIf="!isAdmin()" routerLink='/book' class='btn'>Book Us</a>
+    <button type="button" class="header-cart-btn" (click)="openCart()" aria-label="Cart">
+      🛒<span class="header-cart-badge">{{ cartCount }}</span>
+    </button>
+    <button class="logout-btn" (click)="logout()" aria-label="Log out">Logout</button>
+  </div>
+  <ng-template #loginLink>
+    <div class='header-right'>
+      <button type="button" class="header-cart-btn" (click)="openCart()" aria-label="Cart">
+        🛒<span class="header-cart-badge">{{ cartCount }}</span>
+      </button>
+      <a routerLink='/login' class='header-login-btn'><span>Login</span></a>
+      <a routerLink='/book' class='btn'>Book Us</a>
+    </div>
+  </ng-template>
+</header>

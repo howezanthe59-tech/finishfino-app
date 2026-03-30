@@ -1,0 +1,86 @@
+<section class="services-hero">
+  <div class="hero-overlay">
+    <h1>Our Cleaning Services</h1>
+    <p>Professional cleaning solutions tailored to your needs</p>
+  </div>
+</section>
+
+<section class="services-intro">
+  <div class="intro-content">
+    <h2>Quality Service You Can Trust</h2>
+    <p>
+      At FinishFino Cleaning Pros, we pride ourselves on delivering exceptional cleaning services
+      for both residential and commercial clients. Our experienced team uses professional-grade
+      equipment and eco-friendly products to ensure your space is spotless and healthy.
+    </p>
+  </div>
+</section>
+
+<section class="services-section">
+  <div class="services-container">
+    <div class="services-cards-grid">
+      <article class="service-card" *ngFor="let service of services">
+        <div class="service-thumb">
+          <img class="service-listing-img" [src]="service.image" [alt]="service.alt" loading="lazy" decoding="async" />
+        </div>
+        <div class="service-compact-body">
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+          <div class="service-actions">
+            <a routerLink="/book" class="btn-book-now">Book Now</a>
+            <button class="btn-secondary" (click)="openServiceModal(service)" aria-haspopup="dialog">View Details</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="service-modal-overlay" [class.open]="serviceModalOpen" (click)="closeServiceModal()" *ngIf="selectedService">
+  <div
+    class="service-modal"
+    #serviceModal
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="service-modal-title"
+    aria-describedby="service-modal-desc"
+    tabindex="-1"
+    (keydown)="onServiceModalKeydown($event)"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-inner">
+      <div class="modal-img-side">
+        <img
+          [src]="selectedService.image"
+          [alt]="selectedService.alt"
+          loading="lazy"
+          decoding="async"
+          style="width:100%; height:100%; object-fit:cover; border-radius:16px 0 0 16px"
+        />
+      </div>
+
+      <div class="modal-info-side">
+        <button #serviceModalClose class="modal-close" (click)="closeServiceModal()" aria-label="Close modal">
+          &times;
+        </button>
+        <h2 id="service-modal-title">{{ selectedService.title }}</h2>
+        <p id="service-modal-desc" class="modal-description">{{ selectedService.description }}</p>
+        <div *ngIf="selectedService.priceLines?.length">
+          <h4>Pricing</h4>
+          <ul class="modal-features">
+            <li *ngFor="let price of selectedService.priceLines">{{ price }}</li>
+          </ul>
+        </div>
+        <div *ngIf="selectedService.includes?.length">
+          <h4>Includes</h4>
+          <ul class="modal-features">
+            <li *ngFor="let item of selectedService.includes">{{ item }}</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <a routerLink="/book" class="btn-primary">Book Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

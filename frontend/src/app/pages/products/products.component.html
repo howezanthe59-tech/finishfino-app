@@ -1,0 +1,337 @@
+<!-- products.component.html -->
+
+<section class="products-hero">
+  <div class="hero-overlay">
+    <h1>Professional Cleaning Products</h1>
+    <p>Premium quality products trusted by professionals</p>
+  </div>
+</section>
+
+<section class="products-intro">
+  <div class="intro-content">
+    <h2>Shop Our Professional Line</h2>
+    <p>
+      At FinishFino Cleaning Pros, we don't just use the best products, we make them available to
+      you. Our carefully curated selection of professional grade cleaning supplies gives you the
+      same spotless results our experts deliver.
+    </p>
+    <div class="product-benefits">
+      <div class="benefit-item">
+        <span class="benefit-icon">✓</span>
+        <div>
+          <strong>Professional Grade</strong>
+          <p>Same products our experts use</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">✓</span>
+        <div>
+          <strong>Eco-Friendly</strong>
+          <p>Safe for your family and pets</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">✓</span>
+        <div>
+          <strong>Fast Delivery</strong>
+          <p>Get your products within 2-3 days</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<div class="section-divider-heading" id="browse-products">
+  <h2>Browse Our Products</h2>
+  <p>Professional grade cleaning supplies, the same products our experts trust</p>
+</div>
+
+
+
+<section class="products-section" style="margin-top:0; border-top:none">
+  <div class="products-container">
+    <div class="products-grid">
+      <article
+        class="product-card"
+        *ngFor="let product of products"
+        style="cursor:default"
+      >
+        <div class="product-image" style="padding:0; background:none; min-height:220px">
+          <div class="product-badge" *ngIf="product.badge" [class.new]="product.badgeNew">
+            {{ product.badge }}
+          </div>
+          <img
+            [src]="product.image"
+            [alt]="product.alt"
+            loading="lazy"
+            decoding="async"
+            style="width:100%; height:220px; object-fit:cover"
+          />
+        </div>
+        <div class="product-info">
+          <h3>{{ product.name }}</h3>
+          <div class="product-footer" style="flex-direction:column; align-items:flex-start; gap:12px">
+            <span class="product-price">${{ product.price.toFixed(2) }}</span>
+            <div style="display:flex; gap:10px; width:100%">
+              <button
+                class="btn-add-cart"
+                style="flex:1"
+                (click)="addToCart(product.name, product.price, product.id)"
+              >
+                Add to Cart
+              </button>
+              <button
+                class="btn-secondary"
+                style="flex:1"
+                (click)="openModal(product)"
+                aria-haspopup="dialog"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="bundles-section">
+  <div class="bundles-container">
+    <h2>Value Bundles</h2>
+    <p class="section-subtitle">Save more with our curated cleaning kits</p>
+    <div class="bundles-grid">
+      <article class="bundle-card" *ngFor="let bundle of bundles" [class.featured]="bundle.featured">
+        <div class="bundle-header">
+          <h3>{{ bundle.icon }} {{ bundle.name }}</h3>
+          <span class="bundle-savings">{{ bundle.savings }}</span>
+        </div>
+        <ul class="bundle-items">
+          <li *ngFor="let item of bundle.items">{{ item }}</li>
+        </ul>
+        <div class="bundle-pricing">
+          <span class="original-price">${{ bundle.originalPrice.toFixed(2) }}</span>
+          <span class="bundle-price">${{ bundle.bundlePrice.toFixed(2) }}</span>
+        </div>
+        <button class="btn-primary" (click)="addToCart(bundle.cartName, bundle.bundlePrice)">
+          Add Bundle to Cart
+        </button>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="product-modal-overlay" [class.open]="modalOpen" (click)="closeModal()" *ngIf="selectedProduct">
+  <div
+    class="product-modal"
+    #productModal
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="product-modal-title"
+    aria-describedby="product-modal-desc"
+    tabindex="-1"
+    (keydown)="onModalKeydown($event)"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-inner">
+      <div class="modal-img-side">
+        <img
+          [src]="selectedProduct.image"
+          [alt]="selectedProduct.alt"
+          loading="lazy"
+          decoding="async"
+          style="width:100%; height:100%; object-fit:cover; border-radius:16px 0 0 16px"
+        />
+        <span class="modal-badge" *ngIf="selectedProduct.badge" [class.new]="selectedProduct.badgeNew">
+          {{ selectedProduct.badge }}
+        </span>
+      </div>
+
+      <div class="modal-info-side">
+        <button #productModalClose class="modal-close" (click)="closeModal()" aria-label="Close modal">
+          &times;
+        </button>
+        <h2 id="product-modal-title">{{ selectedProduct.name }}</h2>
+        <p id="product-modal-desc" class="modal-description">{{ selectedProduct.description }}</p>
+        <ul class="modal-features">
+          <li *ngFor="let feature of selectedProduct.features">{{ feature }}</li>
+        </ul>
+        <div class="modal-footer">
+          <span class="modal-price">${{ selectedProduct.price.toFixed(2) }}</span>
+          <button class="btn-primary" (click)="addToCartFromModal()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="cart-summary"
+  [class.active]="cartOpen"
+  #cartPanel
+  role="dialog"
+  [attr.aria-modal]="cartOpen ? 'true' : null"
+  [attr.aria-hidden]="!cartOpen"
+  aria-labelledby="cart-title"
+  tabindex="-1"
+  (keydown)="onCartKeydown($event)"
+>
+  <div class="cart-header">
+    <h3 id="cart-title">ðŸ›’ Shopping Cart</h3>
+    <button #cartClose class="cart-close" (click)="toggleCart()" aria-label="Close cart">&times;</button>
+  </div>
+
+  <div class="cart-items" *ngIf="!checkoutOpen && !orderPlaced">
+    <p class="cart-empty" *ngIf="cartItems.length === 0">Your cart is empty â€” start shopping to add items.</p>
+
+    <div class="cart-item" *ngFor="let item of cartItems; let i = index">
+      <div class="cart-item-info">
+        <div class="cart-item-name">{{ item.name }}</div>
+        <div class="cart-item-price">${{ item.price.toFixed(2) }} each</div>
+      </div>
+
+      <div class="cart-item-controls">
+        <button class="qty-btn" (click)="decrementQuantity(i)" aria-label="Decrease quantity">-</button>
+        <span class="qty-value">{{ item.quantity }}</span>
+        <button class="qty-btn" (click)="incrementQuantity(i)" aria-label="Increase quantity">+</button>
+        <button class="cart-item-remove" (click)="removeFromCart(i)">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-items checkout-panel" *ngIf="checkoutOpen">
+    <div class="checkout-header">
+      <h4>Checkout</h4>
+      <p>Review your order and enter delivery details.</p>
+    </div>
+
+    <div class="checkout-order-table">
+      <div class="checkout-order-row checkout-order-head">
+        <span>Item</span>
+        <span>Qty</span>
+        <span>Total</span>
+      </div>
+      <div class="checkout-order-row" *ngFor="let item of cartItems">
+        <span>{{ item.name }}</span>
+        <span>{{ item.quantity }}</span>
+        <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+      </div>
+    </div>
+
+    <form #checkoutForm="ngForm" class="checkout-form" (ngSubmit)="submitCheckout(checkoutForm)" novalidate>
+      <label>
+        Full Name
+        <input
+          type="text"
+          name="fullName"
+          [(ngModel)]="checkoutData.fullName"
+          #fullName="ngModel"
+          required
+          [attr.aria-invalid]="checkoutSubmitted && fullName.invalid ? 'true' : null"
+          [attr.aria-describedby]="checkoutSubmitted && fullName.invalid ? 'checkout-fullname-error' : null"
+        />
+        <span class="checkout-error" *ngIf="checkoutSubmitted && fullName.invalid" id="checkout-fullname-error">Full name is required.</span>
+      </label>
+
+      <label>
+        Email Address
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="checkoutData.email"
+          #email="ngModel"
+          required
+          email
+          [attr.aria-invalid]="checkoutSubmitted && email.invalid ? 'true' : null"
+          [attr.aria-describedby]="checkoutSubmitted && email.invalid ? 'checkout-email-error' : null"
+        />
+        <span class="checkout-error" *ngIf="checkoutSubmitted && email.invalid" id="checkout-email-error">Enter a valid email.</span>
+      </label>
+
+      <label>
+        Phone Number
+        <input
+          type="tel"
+          name="phone"
+          [(ngModel)]="checkoutData.phone"
+          #phone="ngModel"
+          required
+          [attr.aria-invalid]="checkoutSubmitted && phone.invalid ? 'true' : null"
+          [attr.aria-describedby]="checkoutSubmitted && phone.invalid ? 'checkout-phone-error' : null"
+        />
+        <span class="checkout-error" *ngIf="checkoutSubmitted && phone.invalid" id="checkout-phone-error">Phone number is required.</span>
+      </label>
+
+      <label>
+        Delivery Address
+        <textarea
+          name="address"
+          [(ngModel)]="checkoutData.address"
+          #address="ngModel"
+          rows="3"
+          required
+          [attr.aria-invalid]="checkoutSubmitted && address.invalid ? 'true' : null"
+          [attr.aria-describedby]="checkoutSubmitted && address.invalid ? 'checkout-address-error' : null"
+        ></textarea>
+        <span class="checkout-error" *ngIf="checkoutSubmitted && address.invalid" id="checkout-address-error">Address is required.</span>
+      </label>
+
+      <div class="checkout-actions">
+        <button type="submit" class="btn-primary">Place Order</button>
+        <button type="button" class="btn-secondary" (click)="closeCheckout()">Back to Cart</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="cart-items order-success" *ngIf="orderPlaced">
+    <div class="success-check">✓</div>
+    <h4>Order placed</h4>
+    <p>Your checkout was completed successfully.</p>
+    <p class="order-number">Order #: {{ orderNumber }}</p>
+    <button class="btn-primary" (click)="toggleCart()">Continue Shopping</button>
+  </div>
+
+  <div class="cart-footer" *ngIf="!orderPlaced">
+    <div class="cart-total">
+      <span>Total:</span>
+      <span>${{ cartTotal.toFixed(2) }}</span>
+    </div>
+
+    <div class="cart-auth-note" *ngIf="!isLoggedIn">
+      Please sign in to complete checkout.
+    </div>
+
+    <button class="btn-primary"
+            (click)="openCheckout()"
+            [disabled]="cartItems.length === 0 || checkoutOpen || !isLoggedIn">
+      Checkout
+    </button>
+    <button class="btn-secondary" (click)="toggleCart()" *ngIf="!checkoutOpen">Continue Shopping</button>
+  </div>
+</div>
+
+<section class="why-buy-section">
+  <div class="why-buy-content">
+    <h2>Why Buy From Us?</h2>
+    <div class="why-buy-grid">
+      <div class="why-buy-item" *ngFor="let item of whyBuyItems">
+        <div class="why-buy-icon">{{ item.icon }}</div>
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>Need Professional Cleaning?</h2>
+    <p>Let our experts handle the tough jobs while you enjoy the results.</p>
+    <div class="cta-buttons">
+      <a routerLink="/book" class="btn-primary">Book a Service</a>
+      <a routerLink="/contact" class="btn-outline">Contact Us</a>
+    </div>
+  </div>
+</section>

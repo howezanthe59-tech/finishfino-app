@@ -1,0 +1,72 @@
+<!-- home.component.html -->
+
+<!-- Hero Section -->
+<section class="hero" id="home-hero">
+  <div class="hero-content">
+    <h1>The Best House &amp; Commercial Cleaning Services</h1>
+    <p>Reliable residential, commercial, and janitorial cleaning you can trust.</p>
+    <div class="hero-buttons">
+      <a routerLink="/about" class="btn-primary">Get Started</a>
+      <a routerLink="/login" class="btn-secondary">Login</a>
+    </div>
+  </div>
+</section>
+
+<!-- Scroll Cue -->
+<button class="scroll-cue" (click)="scrollToContent()" aria-label="Scroll to next section">
+  <span class="scroll-arrow"></span>
+  <span class="scroll-arrow shadow"></span>
+</button>
+
+<!-- Services Section -->
+<section class="services">
+  <h2>Our Cleaning Services</h2>
+  <p class="section-subtitle">Professional solutions tailored to your needs</p>
+  <div class="service-cards">
+    <article class="card home-service-card" *ngFor="let service of services">
+      <div class="home-card-inner">
+        <div class="home-card-icon" aria-hidden="true">{{ service.icon }}</div>
+        <h3>{{ service.title }}</h3>
+        <a routerLink="/about" class="btn-learn-more">
+          Learn More<span class="sr-only"> about {{ service.title }}</span>
+        </a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="why-us">
+  <div class="why-content">
+
+    <div class="why-text">
+      <h2>Why Choose FinishFino Cleaning Pros</h2>
+      <ul>
+        <li *ngFor="let reason of reasons">
+          <span class="check-icon" aria-hidden="true">✓</span> {{ reason }}
+        </li>
+      </ul>
+      <a routerLink="/book" class="btn-primary">Book Now</a>
+    </div>
+
+    <div class="why-image">
+      <div class="why-badge">
+        <strong>100%</strong>
+        <span>Satisfaction Guaranteed</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>Ready for a Spotless Space?</h2>
+    <p>Get a free quote today and experience the difference professional cleaning makes.</p>
+    <div class="cta-buttons">
+      <a routerLink="/book" class="btn-primary">Book a Service</a>
+      <a routerLink="/contact" class="btn-outline">Contact Us</a>
+    </div>
+  </div>
+</section>

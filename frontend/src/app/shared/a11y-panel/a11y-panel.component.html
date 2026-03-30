@@ -1,0 +1,96 @@
+<div class="a11y-panel-wrapper" [class.open]="isOpen">
+  <!-- FAB Toggle -->
+  <button 
+    class="a11y-fab" 
+    (click)="togglePanel()" 
+    [attr.aria-expanded]="isOpen"
+    aria-label="Accessibility Settings"
+  >
+    <span class="a11y-icon">♿</span>
+  </button>
+
+  <!-- Side Panel -->
+  <aside class="a11y-panel" [attr.aria-hidden]="!isOpen">
+    <div class="a11y-header">
+      <h2>Accessibility Settings</h2>
+      <button class="close-btn" (click)="togglePanel()" aria-label="Close panel">✕</button>
+    </div>
+
+    <div class="a11y-body">
+      <!-- Font & Text -->
+      <section class="a11y-section">
+        <h3>Font & Text</h3>
+        <div class="control-row">
+          <label>Font Size</label>
+          <div class="font-controls">
+            <button (click)="decreaseFont()" [disabled]="settings.fontScaleIndex === 0">A-</button>
+            <span class="value">{{ fontScaleLabel }}</span>
+            <button (click)="increaseFont()" [disabled]="settings.fontScaleIndex === a11yService.fontScales.length - 1">A+</button>
+          </div>
+        </div>
+        <div class="control-row">
+          <label>Dyslexia Friendly</label>
+          <button 
+            class="toggle-btn" 
+            [class.active]="settings.fontFamily === 'dyslexic'"
+            (click)="update({ fontFamily: settings.fontFamily === 'standard' ? 'dyslexic' : 'standard' })"
+          >
+            {{ settings.fontFamily === 'dyslexic' ? 'On' : 'Off' }}
+          </button>
+        </div>
+        <div class="control-row">
+          <label>Text Spacing</label>
+          <select [ngModel]="settings.spacing" (ngModelChange)="update({ spacing: $event })">
+            <option value="normal">Normal</option>
+            <option value="relaxed">Relaxed</option>
+            <option value="wide">Wide</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Color & Contrast -->
+      <section class="a11y-section">
+        <h3>Color & Contrast</h3>
+        <div class="control-grid">
+          <button [class.active]="settings.darkMode" (click)="update({ darkMode: !settings.darkMode })">Dark Mode</button>
+          <button [class.active]="settings.highContrast" (click)="update({ highContrast: !settings.highContrast })">High Contrast</button>
+          <button [class.active]="settings.invertColors" (click)="update({ invertColors: !settings.invertColors })">Invert Colors</button>
+          <button [class.active]="settings.lowBrightness" (click)="update({ lowBrightness: !settings.lowBrightness })">Low Brightness</button>
+        </div>
+      </section>
+
+      <!-- Visibility -->
+      <section class="a11y-section">
+        <h3>Visibility Aids</h3>
+        <div class="control-grid">
+          <button [class.active]="settings.highlightLinks" (click)="update({ highlightLinks: !settings.highlightLinks })">Highlight Links</button>
+          <button [class.active]="settings.highlightHeadings" (click)="update({ highlightHeadings: !settings.highlightHeadings })">Highlight Headings</button>
+          <button [class.active]="settings.bigCursor" (click)="update({ bigCursor: !settings.bigCursor })">Big Cursor</button>
+          <button [class.active]="settings.readingGuide" (click)="update({ readingGuide: !settings.readingGuide })">Reading Guide</button>
+        </div>
+      </section>
+
+      <!-- Cognitive & Interaction -->
+      <section class="a11y-section">
+        <h3>Cognitive & Control</h3>
+        <div class="control-grid">
+          <button [class.active]="settings.simplifyLayout" (click)="update({ simplifyLayout: !settings.simplifyLayout })">Simplify Layout</button>
+          <button [class.active]="settings.bigButtons" (click)="update({ bigButtons: !settings.bigButtons })">Big Buttons</button>
+          <button [class.active]="settings.reduceMotion" (click)="update({ reduceMotion: !settings.reduceMotion })">Reduce Motion</button>
+          <button [class.active]="settings.muteAll" (click)="update({ muteAll: !settings.muteAll })">Mute All Audio</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="a11y-footer">
+      <button class="reset-btn" (click)="reset()">Reset All Settings</button>
+    </div>
+  </aside>
+</div>
+
+<!-- Reading Guide Overlay -->
+<div 
+  class="reading-guide" 
+  *ngIf="settings.readingGuide"
+  [style.top.px]="readingGuideTop"
+></div>

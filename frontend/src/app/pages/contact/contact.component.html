@@ -1,0 +1,188 @@
+<!-- contact.component.html -->
+
+<section class="contact-section">
+
+  <!-- Page Header -->
+  <div class="contact-header">
+    <h1>Contact Us</h1>
+    <p>Have questions? We're here to help!</p>
+  </div>
+
+  <div class="contact-container">
+
+    <!-- ── Left: Info Panel ─────────────────────────── -->
+    <aside class="contact-info-panel">
+      <h2>Get in Touch</h2>
+      <p>We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+
+      <div class="contact-methods">
+        <div class="contact-method" *ngFor="let method of contactMethods">
+          <div class="method-icon">{{ method.icon }}</div>
+          <div>
+            <h3>{{ method.title }}</h3>
+
+            <!-- Linked value (email / phone) -->
+            <a *ngIf="method.href" [href]="method.href">{{ method.value }}</a>
+
+            <!-- Plain text value (address) -->
+            <p *ngIf="!method.href">{{ method.value }}</p>
+
+            <!-- Optional sub-detail (e.g. hours) -->
+            <p class="method-detail" *ngIf="method.detail">{{ method.detail }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a routerLink="/book">📅 Book a Service</a></li>
+          <li><a routerLink="/about">ℹ️ About Us</a></li>
+          <li><a href="#faq">❓ FAQ</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ── Right: Form / Success Panel ──────────────── -->
+    <div class="contact-form-panel">
+
+      <!-- API error banner -->
+      <div class="error-alert" *ngIf="errorMessage" role="alert">
+        ⚠️ {{ errorMessage }}
+      </div>
+
+      <!-- Contact Form -->
+      <form
+        class="contact-form"
+        [formGroup]="contactForm"
+        (ngSubmit)="onSubmit()"
+        novalidate
+        *ngIf="!successMessage"
+      >
+
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="name">
+            Full Name <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            placeholder="Your full name"
+            aria-required="true"
+            [attr.aria-invalid]="submitted && f['name'].errors ? 'true' : null"
+            [attr.aria-describedby]="submitted && f['name'].errors ? 'contact-name-error' : null"
+            [class.is-invalid]="submitted && f['name'].errors"
+          />
+          <span
+            class="error-message"
+            *ngIf="submitted && f['name'].errors"
+            id="contact-name-error"
+            role="alert"
+          >
+            <ng-container *ngIf="f['name'].errors && f['name'].errors['required']">
+              Full name is required.
+            </ng-container>
+            <ng-container *ngIf="f['name'].errors && f['name'].errors['minlength']">
+              Name must be at least 2 characters.
+            </ng-container>
+          </span>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">
+            Email Address <span class="required">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="your.email@example.com"
+            aria-required="true"
+            [attr.aria-invalid]="submitted && f['email'].errors ? 'true' : null"
+            [attr.aria-describedby]="submitted && f['email'].errors ? 'contact-email-error' : null"
+            [class.is-invalid]="submitted && f['email'].errors"
+          />
+          <span
+            class="error-message"
+            *ngIf="submitted && f['email'].errors"
+            id="contact-email-error"
+            role="alert"
+          >
+            <ng-container *ngIf="f['email'].errors && f['email'].errors['required']">
+              Email address is required.
+            </ng-container>
+            <ng-container *ngIf="f['email'].errors && f['email'].errors['email']">
+              Please enter a valid email address.
+            </ng-container>
+          </span>
+        </div>
+
+        <!-- Message -->
+        <div class="form-group">
+          <label for="message">
+            Your Message <span class="required">*</span>
+          </label>
+          <textarea
+            id="message"
+            formControlName="message"
+            placeholder="Tell us how we can help you..."
+            rows="6"
+            aria-required="true"
+            [attr.aria-invalid]="submitted && f['message'].errors ? 'true' : null"
+            [attr.aria-describedby]="submitted && f['message'].errors ? 'contact-message-error' : null"
+            [class.is-invalid]="submitted && f['message'].errors"
+          ></textarea>
+          <span
+            class="error-message"
+            *ngIf="submitted && f['message'].errors"
+            id="contact-message-error"
+            role="alert"
+          >
+            <ng-container *ngIf="f['message'].errors && f['message'].errors['required']">
+              Message is required.
+            </ng-container>
+            <ng-container *ngIf="f['message'].errors && f['message'].errors['minlength']">
+              Message must be at least 10 characters.
+            </ng-container>
+          </span>
+        </div>
+
+        <button type="submit" class="btn-primary btn-submit" [disabled]="sending">
+          {{ sending ? 'Sending...' : 'Send Message' }}
+        </button>
+
+        <p class="form-notice">
+          <small>We typically respond within 24 hours during business days.</small>
+        </p>
+
+      </form>
+
+      <!-- Success State -->
+      <div class="success-message" *ngIf="successMessage" role="status">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h3>Message Sent!</h3>
+        <p>{{ successMessage }}</p>
+        <button class="btn-secondary" (click)="resetForm()">
+          Send Another Message
+        </button>
+      </div>
+
+    </div><!-- /.contact-form-panel -->
+  </div><!-- /.contact-container -->
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section" id="faq">
+  <div class="faq-container">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-grid">
+      <div class="faq-item" *ngFor="let faq of faqs">
+        <h3>{{ faq.question }}</h3>
+        <p>{{ faq.answer }}</p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,376 @@
+<!-- login.component.html -->
+
+<section class="auth-section">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>{{ activeTab === 'login' ? 'Welcome Back' : 'Create an Account' }}</h1>
+        <p>
+          {{ activeTab === 'login'
+            ? 'Login to manage your bookings and preferences'
+            : 'Join FinishFino and manage your cleaning services' }}
+        </p>
+      </div>
+
+      <div class="auth-tabs" role="tablist" (keydown)="onTabKeydown($event)">
+        <button
+          class="auth-tab"
+          [class.active]="activeTab === 'login'"
+          id="login-tab"
+          #loginTab
+          role="tab"
+          [attr.aria-selected]="activeTab === 'login'"
+          aria-controls="login-panel"
+          [attr.tabindex]="activeTab === 'login' ? '0' : '-1'"
+          (click)="switchTab('login')"
+        >
+          Login
+        </button>
+        <button
+          class="auth-tab"
+          [class.active]="activeTab === 'signup'"
+          id="signup-tab"
+          #signupTab
+          role="tab"
+          [attr.aria-selected]="activeTab === 'signup'"
+          aria-controls="signup-panel"
+          [attr.tabindex]="activeTab === 'signup' ? '0' : '-1'"
+          (click)="switchTab('signup')"
+        >
+          Sign Up
+        </button>
+      </div>
+
+      <div
+        class="auth-panel"
+        id="login-panel"
+        role="tabpanel"
+        aria-labelledby="login-tab"
+        [hidden]="activeTab !== 'login'"
+        [class.active]="activeTab === 'login'"
+      >
+        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" novalidate autocomplete="off">
+          <!-- Dummy fields to absorb browser autofill -->
+          <input type="text" autocomplete="username" style="position:absolute; left:-9999px; opacity:0; height:0; width:0; border:0; padding:0; margin:0;" aria-hidden="true" tabindex="-1" />
+          <input type="password" autocomplete="current-password" style="position:absolute; left:-9999px; opacity:0; height:0; width:0; border:0; padding:0; margin:0;" aria-hidden="true" tabindex="-1" />
+
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input
+              type="email"
+              id="loginEmail"
+              formControlName="email"
+              placeholder="your.email@example.com"
+              aria-required="true"
+              [attr.aria-invalid]="loginSubmitted && lf['email'].errors ? 'true' : null"
+              [attr.aria-describedby]="loginSubmitted && lf['email'].errors ? 'login-email-error' : null"
+              autocomplete="off"
+              name="login-email-new"
+              autocapitalize="off"
+              spellcheck="false"
+              inputmode="email"
+              [class.is-invalid]="loginSubmitted && lf['email'].errors"
+            />
+            <span
+              class="error-message"
+              *ngIf="loginSubmitted && lf['email'].errors"
+              id="login-email-error"
+              role="alert"
+            >
+              <ng-container *ngIf="lf['email'].errors && lf['email'].errors['required']">
+                Please enter your email address.
+              </ng-container>
+              <ng-container *ngIf="lf['email'].errors && lf['email'].errors['email']">
+                Please enter a valid email address.
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="password-input-wrapper">
+              <input
+              [type]="showLoginPassword ? 'text' : 'password'"
+              id="loginPassword"
+              formControlName="password"
+              placeholder="Enter your password"
+              aria-required="true"
+              [attr.aria-invalid]="loginSubmitted && lf['password'].errors ? 'true' : null"
+              [attr.aria-describedby]="loginSubmitted && lf['password'].errors ? 'login-password-error' : null"
+              autocomplete="off"
+              name="login-password-new"
+              autocapitalize="off"
+              spellcheck="false"
+              [class.is-invalid]="loginSubmitted && lf['password'].errors"
+            />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Toggle password visibility"
+                (click)="showLoginPassword = !showLoginPassword"
+              >
+                <span aria-hidden="true">{{ showLoginPassword ? '🙈' : '👁' }}</span>
+              </button>
+            </div>
+            <span
+              class="error-message"
+              *ngIf="loginSubmitted && lf['password'].errors"
+              id="login-password-error"
+              role="alert"
+            >
+              <ng-container *ngIf="lf['password'].errors && lf['password'].errors['required']">
+                Please enter your password.
+              </ng-container>
+              <ng-container *ngIf="lf['password'].errors && lf['password'].errors['minlength']">
+                Password must be at least 6 characters.
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="form-options">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="remember" />
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-primary btn-full">Login</button>
+
+          <div class="auth-error" *ngIf="loginErrorMessage" role="alert">
+            {{ loginErrorMessage }}
+          </div>
+        </form>
+
+        <div class="auth-switch">
+          Don't have an account?
+          <a href="#" (click)="switchTab('signup'); $event.preventDefault()">Sign up free</a>
+        </div>
+      </div>
+
+      <div
+        class="auth-panel"
+        id="signup-panel"
+        role="tabpanel"
+        aria-labelledby="signup-tab"
+        [hidden]="activeTab !== 'signup'"
+        [class.active]="activeTab === 'signup'"
+      >
+        <form
+          [formGroup]="signupForm"
+          (ngSubmit)="onSignup()"
+          novalidate
+          autocomplete="off"
+          *ngIf="!signupSuccess"
+        >
+          <div class="form-group">
+            <label for="signupName">Full Name <span class="required">*</span></label>
+            <input
+              type="text"
+              id="signupName"
+              formControlName="fullName"
+              placeholder="Jane Doe"
+              aria-required="true"
+              [attr.aria-invalid]="signupSubmitted && sf['fullName'].errors ? 'true' : null"
+              [attr.aria-describedby]="signupSubmitted && sf['fullName'].errors ? 'signup-name-error' : null"
+              autocomplete="name"
+              [class.is-invalid]="signupSubmitted && sf['fullName'].errors"
+            />
+            <span
+              class="error-message"
+              *ngIf="signupSubmitted && sf['fullName'].errors"
+              id="signup-name-error"
+              role="alert"
+            >
+              <ng-container *ngIf="sf['fullName'].errors && sf['fullName'].errors['required']">
+                Please enter your full name.
+              </ng-container>
+              <ng-container *ngIf="sf['fullName'].errors && sf['fullName'].errors['minlength']">
+                Name must be at least 2 characters.
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="signupEmail">Email Address <span class="required">*</span></label>
+              <input
+                type="email"
+                id="signupEmail"
+                formControlName="email"
+                placeholder="your.email@example.com"
+              aria-required="true"
+              [attr.aria-invalid]="signupSubmitted && sf['email'].errors ? 'true' : null"
+              [attr.aria-describedby]="signupSubmitted && sf['email'].errors ? 'signup-email-error' : null"
+              autocomplete="off"
+              name="signup-email-new"
+              autocapitalize="off"
+              spellcheck="false"
+              [class.is-invalid]="signupSubmitted && sf['email'].errors"
+            />
+            <span
+              class="error-message"
+              *ngIf="signupSubmitted && sf['email'].errors"
+              id="signup-email-error"
+              role="alert"
+            >
+              <ng-container *ngIf="sf['email'].errors && sf['email'].errors['required']">
+                Please enter your email address.
+              </ng-container>
+              <ng-container *ngIf="sf['email'].errors && sf['email'].errors['email']">
+                Please enter a valid email address.
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="signupPhone">Phone Number</label>
+            <input
+              type="tel"
+              id="signupPhone"
+              formControlName="phone"
+              placeholder="(555) 123-4567"
+              autocomplete="tel"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signupPassword">Password <span class="required">*</span></label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showSignupPassword ? 'text' : 'password'"
+                id="signupPassword"
+                formControlName="password"
+                placeholder="At least 8 characters"
+                aria-required="true"
+                [attr.aria-invalid]="signupSubmitted && (sf['password'].errors || signupForm.errors?.['weakPassword']) ? 'true' : null"
+                [attr.aria-describedby]="signupSubmitted && (sf['password'].errors || signupForm.errors?.['weakPassword']) ? 'signup-password-error' : null"
+                autocomplete="off"
+                name="signup-password-new"
+                [class.is-invalid]="signupSubmitted && sf['password'].errors"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Toggle password visibility"
+                (click)="showSignupPassword = !showSignupPassword"
+              >
+                <span aria-hidden="true">{{ showSignupPassword ? '🙈' : '👁' }}</span>
+              </button>
+            </div>
+            <span
+              class="error-message"
+              *ngIf="signupSubmitted && (sf['password'].errors || signupForm.errors?.['weakPassword'])"
+              id="signup-password-error"
+              role="alert"
+            >
+              <ng-container *ngIf="sf['password'].errors && sf['password'].errors['required']">
+                Password is required.
+              </ng-container>
+              <ng-container *ngIf="sf['password'].errors && sf['password'].errors['minlength']">
+                Password must be at least 8 characters.
+              </ng-container>
+              <ng-container *ngIf="signupForm.errors?.['weakPassword']">
+                Must include uppercase, lowercase, number, and special character.
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="signupConfirm">Confirm Password <span class="required">*</span></label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                id="signupConfirm"
+                formControlName="confirmPassword"
+                placeholder="Repeat your password"
+                aria-required="true"
+                [attr.aria-invalid]="signupSubmitted && (sf['confirmPassword'].errors || passwordMismatch) ? 'true' : null"
+                [attr.aria-describedby]="signupSubmitted && (sf['confirmPassword'].errors || passwordMismatch) ? 'signup-confirm-error' : null"
+                autocomplete="off"
+                name="signup-confirm-new"
+                [class.is-invalid]="signupSubmitted && (sf['confirmPassword'].errors || passwordMismatch)"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Toggle confirm password visibility"
+                (click)="showConfirmPassword = !showConfirmPassword"
+              >
+                <span aria-hidden="true">{{ showConfirmPassword ? '🙈' : '👁' }}</span>
+              </button>
+            </div>
+            <span
+              class="error-message"
+              *ngIf="signupSubmitted && (sf['confirmPassword'].errors || passwordMismatch)"
+              id="signup-confirm-error"
+              role="alert"
+            >
+              <ng-container *ngIf="sf['confirmPassword'].errors && sf['confirmPassword'].errors['required']">
+                Please confirm your password.
+              </ng-container>
+              <ng-container *ngIf="passwordMismatch">
+                Passwords do not match.
+              </ng-container>
+            </span>
+          </div>
+
+          <div
+            class="terms-group"
+            [class.checked]="termsChecked"
+            [class.error]="signupSubmitted && sf['agreeTerms'].errors"
+          >
+            <input
+              type="checkbox"
+              id="agreeTerms"
+              formControlName="agreeTerms"
+              [attr.aria-invalid]="signupSubmitted && sf['agreeTerms'].errors ? 'true' : null"
+              [attr.aria-describedby]="signupSubmitted && sf['agreeTerms'].errors ? 'signup-terms-error' : null"
+            />
+            <label for="agreeTerms">
+              I have read and agree to the
+              <a routerLink="/terms" target="_blank">Terms &amp; Conditions</a>
+              and
+              <a routerLink="/privacy" target="_blank">Privacy Policy</a>
+              of FinishFino Cleaning Pros.
+            </label>
+          </div>
+          <span
+            class="terms-error"
+            *ngIf="signupSubmitted && sf['agreeTerms'].errors"
+            id="signup-terms-error"
+            role="alert"
+          >
+            You must agree to the Terms &amp; Conditions and Privacy Policy to create an account.
+          </span>
+
+          <button type="submit" class="btn-primary btn-full">Create Account</button>
+        </form>
+
+        <div class="auth-success" *ngIf="signupSuccess" role="status">
+          <div class="success-icon" aria-hidden="true">✓</div>
+          <h3>Account Created!</h3>
+          <p>Welcome to FinishFino Cleaning Pros. You can now log in to manage your bookings.</p>
+          <button class="btn-primary" (click)="goToLogin()">Go to Login</button>
+        </div>
+
+        <div class="auth-switch" *ngIf="!signupSuccess">
+          Already have an account?
+          <a href="#" (click)="switchTab('login'); $event.preventDefault()">Log in</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-info">
+      <h2>Why Create an Account?</h2>
+      <div class="info-features">
+        <div class="feature" *ngFor="let feature of features">
+          <div class="feature-icon">{{ feature.icon }}</div>
+          <div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

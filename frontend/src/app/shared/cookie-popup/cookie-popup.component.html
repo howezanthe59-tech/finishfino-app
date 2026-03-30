@@ -1,0 +1,15 @@
+<div class="cookie-popup-overlay" *ngIf="isVisible">
+  <div class="cookie-popup-card">
+    <div class="cookie-content">
+      <h3>We value your privacy</h3>
+      <p>
+        This website uses cookies to store information, improve your experience, and analyze traffic. 
+        By using our website, you agree to our <a routerLink="/privacy">Privacy Policy</a> and cookie usage.
+      </p>
+    </div>
+    <div class="cookie-actions">
+      <button class="btn-secondary" (click)="browseSettings()">Browse Settings</button>
+      <button class="btn-primary" (click)="acceptAll()">Accept Cookies</button>
+    </div>
+  </div>
+</div>
