@@ -2,6 +2,8 @@
     background: linear-gradient(90deg, #102f1f 0%, #0f311f 100%);
     color: #c7b8a2;
     padding-top: 34px;
+    content-visibility: auto;
+    contain-intrinsic-size: 460px;
 }
 
 .footer-top,

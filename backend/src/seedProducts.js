@@ -10,7 +10,7 @@ const products = [
     description: 'Powerful yet gentle formula perfect for all surfaces. Cuts through grease and grime while leaving a fresh, clean scent.',
     category: 'Soap',
     stock_quantity: 120,
-    image: 'assets/images/multi surface.jpeg',
+    image: 'assets/images/multi surface.webp',
     badge: 'Best Seller',
     features: ['Safe for all surfaces', 'Biodegradable formula', 'Fresh lemon scent']
   },
@@ -21,7 +21,7 @@ const products = [
     description: 'Kill 99.9% of germs, bacteria, and viruses. EPA-approved formula for professional sanitization.',
     category: 'Disinfectant',
     stock_quantity: 140,
-    image: 'assets/images/disinnfectant .jpeg',
+    image: 'assets/images/disinfectant.webp',
     badge: 'New',
     features: ['Kills 99.9% of germs', 'No harsh fumes']
   },
@@ -32,7 +32,7 @@ const products = [
     description: 'Maximum whitening and sanitizing power. Perfect for tough stains and deep cleaning tasks.',
     category: 'Bleach',
     stock_quantity: 200,
-    image: 'assets/images/bleach.jpeg',
+    image: 'assets/images/bleach.webp',
     features: ['Maximum strength formula', 'Whitens & brightens', 'Removes tough stains']
   },
   {
@@ -42,7 +42,7 @@ const products = [
     description: 'Ultra-absorbent microfiber cloths that trap dirt and dust. Reusable and machine washable.',
     category: 'Cloth',
     stock_quantity: 160,
-    image: 'assets/images/cloth.jpeg',
+    image: 'assets/images/cloth.webp',
     badge: 'Popular',
     features: ['Pack of 12 cloths', 'Ultra-absorbent', 'Lint-free cleaning']
   },
@@ -53,7 +53,7 @@ const products = [
     description: 'Long-lasting fresh linen scent that eliminates odors and leaves your home smelling clean and inviting.',
     category: 'Spray',
     stock_quantity: 110,
-    image: 'assets/images/home spray.jpeg',
+    image: 'assets/images/home spray.webp',
     features: ['Fresh linen fragrance', 'Odor eliminator', 'Natural ingredients']
   },
   {
@@ -63,7 +63,7 @@ const products = [
     description: 'Calming lavender scent creates a relaxing atmosphere. Perfect for bedrooms and living spaces.',
     category: 'Spray',
     stock_quantity: 95,
-    image: 'assets/images/lavender dreams.jpeg',
+    image: 'assets/images/lavender dreams.webp',
     features: ['Soothing lavender scent', 'Aromatherapy benefits', 'All-natural formula']
   },
   {
@@ -73,7 +73,7 @@ const products = [
     description: 'Energizing citrus blend that freshens any room. Uplifting and invigorating fragrance.',
     category: 'Spray',
     stock_quantity: 85,
-    image: 'assets/images/citrus blast.jpeg',
+    image: 'assets/images/citrus blast.webp',
     features: ['Zesty citrus scent', 'Energy-boosting aroma', 'Natural essential oils']
   },
   {
@@ -83,7 +83,7 @@ const products = [
     description: 'Crystal-clear shine without streaks. Ammonia-free formula safe for all glass surfaces.',
     category: 'Glass Cleaner',
     stock_quantity: 150,
-    image: 'assets/images/Glass cleaner.jpeg',
+    image: 'assets/images/Glass cleaner.webp',
     features: ['Streak-free formula', 'Ammonia-free', 'Anti-fog protection']
   },
   {
@@ -93,7 +93,7 @@ const products = [
     description: 'One cleaner for everything. Tackles kitchen grease, bathroom grime, and everyday messes.',
     category: 'Soap',
     stock_quantity: 130,
-    image: 'assets/images/soap.jpeg',
+    image: 'assets/images/soap.webp',
     badge: 'Best Value',
     features: ['Works on any surface', 'Concentrated formula', 'Eco-friendly']
   }

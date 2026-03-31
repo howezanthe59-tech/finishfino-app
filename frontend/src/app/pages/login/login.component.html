@@ -49,7 +49,7 @@
         [hidden]="activeTab !== 'login'"
         [class.active]="activeTab === 'login'"
       >
-        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" novalidate autocomplete="off">
+        <form *ngIf="loginForm" [formGroup]="loginForm" (ngSubmit)="onLogin()" novalidate autocomplete="off">
           <!-- Dummy fields to absorb browser autofill -->
           <input type="text" autocomplete="username" style="position:absolute; left:-9999px; opacity:0; height:0; width:0; border:0; padding:0; margin:0;" aria-hidden="true" tabindex="-1" />
           <input type="password" autocomplete="current-password" style="position:absolute; left:-9999px; opacity:0; height:0; width:0; border:0; padding:0; margin:0;" aria-hidden="true" tabindex="-1" />
@@ -132,7 +132,22 @@
               <input type="checkbox" formControlName="remember" />
               <span>Remember me</span>
             </label>
-            <a href="#" class="forgot-link">Forgot password?</a>
+            <a
+              href="#"
+              class="forgot-link"
+              [class.disabled]="forgotPasswordSending"
+              [attr.aria-disabled]="forgotPasswordSending ? 'true' : null"
+              (click)="onForgotPassword($event)"
+            >
+              {{ forgotPasswordSending ? 'Sending...' : 'Forgot password?' }}
+            </a>
+          </div>
+
+          <div class="auth-info-message" *ngIf="forgotPasswordMessage" role="status">
+            {{ forgotPasswordMessage }}
+          </div>
+          <div class="auth-error" *ngIf="forgotPasswordError" role="alert">
+            {{ forgotPasswordError }}
           </div>
 
           <button type="submit" class="btn-primary btn-full">Login</button>
@@ -161,7 +176,7 @@
           (ngSubmit)="onSignup()"
           novalidate
           autocomplete="off"
-          *ngIf="!signupSuccess"
+          *ngIf="signupForm && !signupSuccess"
         >
           <div class="form-group">
             <label for="signupName">Full Name <span class="required">*</span></label>

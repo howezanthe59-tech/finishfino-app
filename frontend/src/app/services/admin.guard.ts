@@ -16,15 +16,10 @@ export class AdminGuard implements CanActivate {
   ) {}
 
   canActivate(
-    route: ActivatedRouteSnapshot,
+    _route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     const profile = this.profileService.getProfile();
-    const token = this.auth.getToken();
-    
-    if (!token) {
-      return this.router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
-    }
 
     if (profile && profile.role === 'admin') {
       return true;

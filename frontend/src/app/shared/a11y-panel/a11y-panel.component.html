@@ -40,7 +40,7 @@
         </div>
         <div class="control-row">
           <label>Text Spacing</label>
-          <select [ngModel]="settings.spacing" (ngModelChange)="update({ spacing: $event })">
+          <select #spacingSelect [value]="settings.spacing" (change)="update({ spacing: $any(spacingSelect.value) })">
             <option value="normal">Normal</option>
             <option value="relaxed">Relaxed</option>
             <option value="wide">Wide</option>

@@ -18,7 +18,7 @@
         Fields marked with <span class="required">*</span> are required.
       </p>
 
-      <form [formGroup]="bookingForm" novalidate class="booking-form" *ngIf="!lastConfirmation">
+      <form [formGroup]="bookingForm" novalidate class="booking-form" *ngIf="bookingForm && !lastConfirmation">
         
         <!-- Step 1: Contact Details -->
         <div class="form-card" *ngIf="currentStep === 1">
@@ -342,16 +342,6 @@
                     <span class="addon-price">+$30</span>
                   </div>
                 </label>
-                <label class="addon-card" [class.active]="bookingForm.get('addOns.laundry')?.value">
-                  <div class="addon-checkbox">
-                    <input type="checkbox" formControlName="laundry">
-                    <span class="checkmark"></span>
-                  </div>
-                  <div class="addon-info">
-                    <span class="addon-name">Laundry</span>
-                    <span class="addon-price">+$25</span>
-                  </div>
-                </label>
                 <label class="addon-card" [class.active]="bookingForm.get('addOns.windows')?.value">
                   <div class="addon-checkbox">
                     <input type="checkbox" formControlName="windows">
@@ -370,16 +360,6 @@
                   <div class="addon-info">
                     <span class="addon-name">Deep Clean Focus</span>
                     <span class="addon-price">+$60</span>
-                  </div>
-                </label>
-                <label class="addon-card" [class.active]="bookingForm.get('addOns.pets')?.value">
-                  <div class="addon-checkbox">
-                    <input type="checkbox" formControlName="pets">
-                    <span class="checkmark"></span>
-                  </div>
-                  <div class="addon-info">
-                    <span class="addon-name">Pet Hair Extra</span>
-                    <span class="addon-price">+$20</span>
                   </div>
                 </label>
               </div>
@@ -480,6 +460,41 @@
                   </p>
                   <p *ngIf="bookingForm.value.instructions">
                     <strong>Instructions:</strong> {{ bookingForm.value.instructions }}
+                  </p>
+                </div>
+              </div>
+              <div class="review-block" style="grid-column: 1 / -1;">
+                <div class="review-block-header">
+                  <h4>Health & Safety Information</h4>
+                </div>
+                <div class="review-block-content" style="display:flex; flex-direction:column; gap:1rem;">
+                  <label class="field" style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer;">
+                    <input type="checkbox" formControlName="health_acknowledged" style="margin-top:0.25rem;">
+                    <span style="font-size: 0.95rem; line-height: 1.4;">
+                      I confirm I have informed the company of any allergies, asthma, skin sensitivities, or health conditions that may be affected by cleaning products.
+                    </span>
+                  </label>
+                  <div class="field-error" *ngIf="submitted && bookingForm.get('health_acknowledged')?.invalid" style="margin-top:-0.5rem;">
+                    Please confirm your health and safety information before continuing.
+                  </div>
+
+                  <label class="field" style="margin-top: 0.5rem;">
+                    <span class="label-text">Do you have any health conditions or sensitivities we should be aware of?</span>
+                    <div class="custom-select-wrapper">
+                      <select formControlName="hasHealthCondition">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
+                    </div>
+                  </label>
+
+                  <label class="field" *ngIf="bookingForm.get('hasHealthCondition')?.value === 'yes'" style="margin-top: 0.5rem;">
+                    <span class="label-text">Please describe your condition or sensitivity</span>
+                    <textarea rows="3" formControlName="health_notes" placeholder="Please provide details..."></textarea>
+                  </label>
+                  
+                  <p style="font-size:0.85rem; color:#6b7280; font-style: italic; margin: 0;">
+                    Your safety is important to us. This helps us choose safe cleaning products for your home.
                   </p>
                 </div>
               </div>

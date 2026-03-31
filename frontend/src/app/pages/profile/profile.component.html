@@ -1,6 +1,6 @@
 <section class="profile-section">
   <div class="profile-card">
-    <h1>Your Profile</h1>
+    <h1>Welcome Back to Profile</h1>
     <p>Keep your contact and service address up to date.</p>
 
     <form [formGroup]="profileForm" (ngSubmit)="save()" novalidate>
@@ -8,7 +8,7 @@
 
       <div class="avatar-row">
         <div class="avatar">
-          <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" />
+          <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" width="88" height="88" />
           <ng-template #avatarFallback>
             <span class="avatar-initials" aria-hidden="true">{{ initials }}</span>
           </ng-template>
@@ -92,53 +92,4 @@
     </form>
   </div>
 
-  <div class="history-grid">
-    <section class="history-card">
-      <header>
-        <h2>Booking History</h2>
-        <p>All bookings tied to your account.</p>
-      </header>
-      <div *ngIf="bookings.length; else noBookings">
-        <div class="history-item" *ngFor="let b of bookings">
-          <div>
-            <strong>{{ b.serviceType | titlecase }}</strong>
-            <p>{{ b.date | date:'mediumDate' }} · {{ b.time }}</p>
-            <p class="muted">{{ b.address || 'Service address on file' }}</p>
-          </div>
-          <div class="history-meta">
-            <span>Total: ${{ b.total.toFixed(2) }}</span>
-            <span class="status">Status: {{ b.status }}</span>
-          </div>
-        </div>
-      </div>
-      <ng-template #noBookings>
-        <p>No bookings yet.</p>
-        <a routerLink="/book" class="btn-primary small">Book a Service</a>
-      </ng-template>
-    </section>
-
-    <section class="history-card">
-      <header>
-        <h2>Order History</h2>
-        <p>All product orders tied to your account.</p>
-      </header>
-      <div *ngIf="orders.length; else noOrders">
-        <div class="history-item" *ngFor="let o of orders">
-          <div>
-            <strong>{{ o.items.length }} item{{ o.items.length === 1 ? '' : 's' }}</strong>
-            <p>{{ o.createdAt | date:'mediumDate' }}</p>
-            <p class="muted">Order #{{ o.id.slice(0, 8) }}</p>
-          </div>
-          <div class="history-meta">
-            <span>Total: ${{ o.total.toFixed(2) }}</span>
-            <span class="status">Status: {{ o.status }}</span>
-          </div>
-        </div>
-      </div>
-      <ng-template #noOrders>
-        <p>No orders yet.</p>
-        <a routerLink="/products" class="btn-primary small">Shop Products</a>
-      </ng-template>
-    </section>
-  </div>
 </section>

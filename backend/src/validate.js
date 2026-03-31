@@ -13,6 +13,19 @@ const loginSchema = z.object({
   password: z.string().min(1).max(200)
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email().max(150)
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(20).max(500),
+  new_password: z.string().min(8).max(200).optional(),
+  password: z.string().min(8).max(200).optional()
+}).refine(
+  (data) => !!(data.new_password || data.password),
+  { message: 'new_password is required.' }
+);
+
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2).max(150),
   email: z.string().email().max(150),
@@ -37,6 +50,10 @@ const bookingSchema = z.object({
   time: z.string().optional().nullable(),
   instructions: z.string().optional().nullable(),
   addOns: z.array(z.string()).optional(),
+  health_acknowledged: z.boolean().refine(val => val === true, {
+    message: "You must acknowledge the health and safety disclosure."
+  }),
+  health_notes: z.string().optional().nullable(),
   total: z.number().nonnegative(),
   deposit: z.number().nonnegative(),
   balance: z.number().nonnegative(),
@@ -49,13 +66,26 @@ const orderSchema = z.object({
       id: z.string().min(1),
       name: z.string().min(1),
       price: z.number().nonnegative(),
-      quantity: z.number().int().positive()
+      quantity: z.number().int().positive().max(100)
     })
   ).min(1),
   totals: z.object({
     total: z.number().nonnegative(),
     deposit: z.number().nonnegative().optional(),
     balance: z.number().nonnegative().optional()
+  }),
+  payment: z.object({
+    accountType: z
+      .string()
+      .transform((v) => String(v || '').trim())
+      .refine(
+        (v) => ['checking', 'savings', 'credit', 'debit', 'paypal'].includes(v.toLowerCase()),
+        { message: 'Invalid account type.' }
+      ),
+    accountLast4: z
+      .string()
+      .transform((v) => String(v || '').replace(/\D/g, ''))
+      .refine((v) => /^\d{4}$/.test(v), { message: 'Account number must be exactly 4 digits.' })
   }),
   customer: z.object({
     fullName: z.string().min(2).max(150),
@@ -105,6 +135,8 @@ function validate(schema, payload) {
 module.exports = {
   signupSchema,
   loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   profileUpdateSchema,
   bookingSchema,
   orderSchema,

@@ -79,11 +79,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
-  private loadProfile(): void {
-    this.profile = this.profileService.getProfile();
-    this.firstName = this.extractFirstName(this.profile?.fullName);
-  }
-
   private extractFirstName(fullName?: string | null): string {
     if (!fullName) return '';
     const parts = fullName.trim().split(' ').filter(Boolean);

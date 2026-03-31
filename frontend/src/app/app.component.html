@@ -8,6 +8,10 @@
 
 <app-footer></app-footer>
 
-<app-a11y-panel></app-a11y-panel>
+<ng-container *ngIf="a11yPanelComponent">
+  <ng-container *ngComponentOutlet="a11yPanelComponent"></ng-container>
+</ng-container>
 
-<app-cookie-popup></app-cookie-popup>
+<ng-container *ngIf="cookiePopupComponent">
+  <ng-container *ngComponentOutlet="cookiePopupComponent"></ng-container>
+</ng-container>

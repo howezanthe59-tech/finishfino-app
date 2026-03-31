@@ -17,20 +17,17 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
 // Enforces strong password rules and prevents using email local-part
 function passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value || '';
-  const email = control.get('email')?.value || '';
-  const emailLocal = email.split('@')[0]?.toLowerCase() || '';
 
   const hasUpper = /[A-Z]/.test(password);
   const hasLower = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecial = /[^A-Za-z0-9]/.test(password);
   const longEnough = password.length >= 8;
-  const containsEmailPart = emailLocal && password.toLowerCase().includes(emailLocal);
 
   if (!longEnough || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
     return { weakPassword: true };
   }
-  // Removed containsEmailPart check to allow passwords like AdminPass123!
+  // Password rules focus on complexity and length checks only.
   return null;
 }
 
@@ -56,6 +53,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
   signupSubmitted = false;
   signupSuccess   = false;
   loginErrorMessage: string | null = null;
+  forgotPasswordMessage: string | null = null;
+  forgotPasswordError: string | null = null;
+  forgotPasswordSending = false;
 
   loginForm!:  FormGroup;
   signupForm!: FormGroup;
@@ -81,13 +81,6 @@ export class LoginComponent implements OnInit, AfterViewInit {
     // Determine where to send the user after auth (defaults to dashboard)
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
 
-    // Already logged in? Skip login/signup and go to dashboard.
-    const existingProfile = this.profileService.getProfile();
-    if (existingProfile) {
-      this.router.navigateByUrl(this.returnUrl);
-      return;
-    }
-
     this.loginForm = this.fb.group({
       email:    ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
@@ -103,6 +96,13 @@ export class LoginComponent implements OnInit, AfterViewInit {
       agreeTerms:      [false, Validators.requiredTrue]
     }, { validators: [passwordMatchValidator, passwordStrengthValidator] });
 
+    // Already logged in? Skip login/signup and go to dashboard.
+    const existingProfile = this.profileService.getProfile();
+    if (existingProfile) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
+
     // Auto-switch to signup if ?tab=signup in URL
     this.route.queryParams.subscribe(params => {
       if (params['returnUrl']) this.returnUrl = params['returnUrl'];
@@ -113,6 +113,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     // Clear any browser autofill that may appear on initial load
     setTimeout(() => {
+      if (!this.loginForm || !this.signupForm) return;
       this.loginForm.reset({ email: '', password: '', remember: false });
       this.signupForm.reset();
     }, 0);
@@ -121,6 +122,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
   switchTab(tab: 'login' | 'signup'): void {
     this.activeTab = tab;
     if (tab === 'login') this.loginErrorMessage = null;
+    this.forgotPasswordMessage = null;
+    this.forgotPasswordError = null;
   }
 
   onTabKeydown(event: KeyboardEvent): void {
@@ -154,6 +157,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
   onLogin(): void {
     this.loginSubmitted = true;
     this.loginErrorMessage = null;
+    this.forgotPasswordMessage = null;
+    this.forgotPasswordError = null;
     if (this.loginForm.invalid) return;
     this.authService.login({
       email: this.loginForm.value.email,
@@ -187,6 +192,45 @@ export class LoginComponent implements OnInit, AfterViewInit {
         } else {
           this.loginErrorMessage = 'We could not log you in right now. Please try again.';
         }
+      }
+    });
+  }
+
+  onForgotPassword(event: Event): void {
+    event.preventDefault();
+    this.loginErrorMessage = null;
+    this.forgotPasswordMessage = null;
+    this.forgotPasswordError = null;
+
+    const emailControl = this.loginForm.get('email');
+    const email = String(emailControl?.value || '').trim();
+    emailControl?.markAsTouched();
+    emailControl?.updateValueAndValidity();
+
+    if (!email) {
+      this.loginSubmitted = true;
+      this.forgotPasswordError = 'Enter your email address first, then click Forgot password.';
+      return;
+    }
+
+    if (emailControl?.invalid) {
+      this.loginSubmitted = true;
+      this.forgotPasswordError = 'Please enter a valid email address.';
+      return;
+    }
+
+    this.forgotPasswordSending = true;
+    this.authService.forgotPassword({ email }).subscribe({
+      next: (res) => {
+        this.forgotPasswordMessage = res?.message || 'If an account exists, a password reset link has been sent.';
+        this.forgotPasswordSending = false;
+      },
+      error: (err) => {
+        this.forgotPasswordError =
+          err?.error?.error ||
+          err?.error?.message ||
+          'We could not send a reset email right now. Please try again.';
+        this.forgotPasswordSending = false;
       }
     });
   }

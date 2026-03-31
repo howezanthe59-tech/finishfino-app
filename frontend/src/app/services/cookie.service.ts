@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
@@ -28,10 +28,8 @@ export class CookieService {
   preferences$ = this.preferencesSubject.asObservable();
 
   constructor(private http: HttpClient, private authService: AuthService) {
-    // If user is already logged in at startup, sync
-    if (this.authService.getToken()) {
-      this.syncWithBackend();
-    }
+    // Try sync at startup; if unauthenticated, backend returns 401 and we ignore.
+    this.syncWithBackend();
 
     // React to new logins
     this.authService.loggedIn$.subscribe(() => {
@@ -41,22 +39,28 @@ export class CookieService {
 
   getStoredPreferences(): CookiePreferences | null {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+
+    try {
+      return this.normalizePreferences(JSON.parse(stored));
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
   }
 
   setConsent(prefs: CookiePreferences) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-    this.preferencesSubject.next(prefs);
-    
-    if (this.authService.getToken()) {
-      this.http.post('/api/cookie-consent', { preferences: prefs }, {
-        headers: { 'x-auth-token': this.authService.getToken() || '' }
-      })
-        .pipe(catchError(() => of(null)))
-        .subscribe();
-    }
+    const normalized = this.normalizePreferences(prefs);
+    if (!normalized) return;
 
-    this.applyPreferences(prefs);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    this.preferencesSubject.next(normalized);
+    
+    this.http.post('/api/cookie-consent', { preferences: normalized })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+
+    this.applyPreferences(normalized);
   }
 
   hasConsented(): boolean {
@@ -94,18 +98,14 @@ export class CookieService {
   }
 
   syncWithBackend() {
-    const token = this.authService.getToken();
-    if (!token) return;
-
-    this.http.get<{ preferences: CookiePreferences | null }>('/api/cookie-consent', {
-      headers: { 'x-auth-token': token }
-    })
+    this.http.get<{ preferences: CookiePreferences | null }>('/api/cookie-consent')
       .pipe(
         tap(res => {
-          if (res && res.preferences) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(res.preferences));
-            this.preferencesSubject.next(res.preferences);
-            this.applyPreferences(res.preferences);
+          const normalized = this.normalizePreferences(res?.preferences);
+          if (normalized) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+            this.preferencesSubject.next(normalized);
+            this.applyPreferences(normalized);
           }
         }),
         catchError((err) => {
@@ -116,5 +116,26 @@ export class CookieService {
           return of(null);
         })
       ).subscribe();
+  }
+
+  private normalizePreferences(raw: unknown): CookiePreferences | null {
+    let parsed: unknown = raw;
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        return null;
+      }
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const prefs = parsed as Partial<CookiePreferences>;
+
+    return {
+      essential: true,
+      analytics: !!prefs.analytics,
+      marketing: !!prefs.marketing,
+      functional: !!prefs.functional
+    };
   }
 }

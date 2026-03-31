@@ -6,6 +6,46 @@ const { bookingSchema, validate } = require('../validate');
 
 const router = express.Router();
 
+async function insertOrderItem(orderId, productName, quantity, unitPriceCents) {
+  const name = String(productName || '').trim() || 'Unnamed Product';
+  const qty = Math.max(1, Number(quantity) || 1);
+  const price = Math.max(0, Math.round(Number(unitPriceCents) || 0));
+
+  const attempts = [
+    {
+      sql: `INSERT INTO order_items (order_id, product_name, quantity, price_cents)
+            VALUES (?,?,?,?)`,
+      params: [orderId, name, qty, price]
+    },
+    {
+      sql: `INSERT INTO order_items (order_id, product_name, quantity, price)
+            VALUES (?,?,?,?)`,
+      params: [orderId, name, qty, price]
+    },
+    {
+      sql: `INSERT INTO order_items (id, order_id, product_name, quantity, price_cents)
+            VALUES (?,?,?,?,?)`,
+      params: [randomUUID(), orderId, name, qty, price]
+    },
+    {
+      sql: `INSERT INTO order_items (id, order_id, product_name, quantity, price)
+            VALUES (?,?,?,?,?)`,
+      params: [randomUUID(), orderId, name, qty, price]
+    }
+  ];
+
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      await query(attempt.sql, attempt.params);
+      return;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('Failed to insert order item');
+}
+
 function withTimeout(promise, ms, label) {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -35,8 +75,8 @@ router.post('/', async (req, res) => {
     await withTimeout(
       query(
       `INSERT INTO bookings
-      (id, user_id, full_name, email, phone, service_type, product_selection, cleaning_level, service_size, property_type, bedrooms, bathrooms, size_sqft, date, time, instructions, add_ons, total_cents, deposit_cents, balance_cents, status)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      (id, user_id, full_name, email, phone, service_type, product_selection, cleaning_level, service_size, property_type, bedrooms, bathrooms, size_sqft, date, time, instructions, add_ons, total_cents, deposit_cents, balance_cents, status, health_acknowledged, health_notes)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         user.id,
@@ -58,7 +98,9 @@ router.post('/', async (req, res) => {
         Math.round(Number(payload.total) * 100),
         Math.round(Number(payload.deposit) * 100),
         Math.round(Number(payload.balance || 0) * 100),
-        payload.status || 'pending_deposit'
+        payload.status || 'pending_deposit',
+        payload.health_acknowledged ? 1 : 0,
+        payload.health_notes || null
       ]
       ),
       6000,
@@ -75,7 +117,7 @@ router.post('/', async (req, res) => {
       [
         orderId,
         id,
-        payload.userId || null,
+        user.id,
         JSON.stringify(payload.productSelection || []),
         Math.round(Number(payload.total) * 100),
         Math.round(Number(payload.deposit || 0) * 100),
@@ -86,6 +128,21 @@ router.post('/', async (req, res) => {
       6000,
       'insert booking order'
     );
+
+    const selectedProducts = payload.productSelection || [];
+    for (const prodName of selectedProducts) {
+      await withTimeout(
+        insertOrderItem(
+          orderId,
+          prodName,
+          1, // Default quantity of 1 for booking-selected products
+          0  // Price is included in aggregate booking total
+        ),
+        6000,
+        'insert order item'
+      );
+    }
+
     console.log('[bookings] insert order ok', { orderId });
     return res.status(201).json({ bookingId: id });
   } catch (e) {

@@ -67,6 +67,8 @@
             [alt]="product.alt"
             loading="lazy"
             decoding="async"
+            width="1344"
+            height="768"
             style="width:100%; height:220px; object-fit:cover"
           />
         </div>
@@ -115,7 +117,7 @@
           <span class="original-price">${{ bundle.originalPrice.toFixed(2) }}</span>
           <span class="bundle-price">${{ bundle.bundlePrice.toFixed(2) }}</span>
         </div>
-        <button class="btn-primary" (click)="addToCart(bundle.cartName, bundle.bundlePrice)">
+        <button class="btn-primary" (click)="addToCart(bundle.cartName, bundle.bundlePrice, bundle.id)">
           Add Bundle to Cart
         </button>
       </article>
@@ -142,6 +144,8 @@
           [alt]="selectedProduct.alt"
           loading="lazy"
           decoding="async"
+          width="1344"
+          height="768"
           style="width:100%; height:100%; object-fit:cover; border-radius:16px 0 0 16px"
         />
         <span class="modal-badge" *ngIf="selectedProduct.badge" [class.new]="selectedProduct.badgeNew">
@@ -168,6 +172,13 @@
 </div>
 
 <div
+  class="cart-backdrop"
+  [class.active]="cartOpen"
+  (click)="toggleCart()"
+  [attr.aria-hidden]="!cartOpen"
+></div>
+
+<div
   class="cart-summary"
   [class.active]="cartOpen"
   #cartPanel
@@ -179,24 +190,38 @@
   (keydown)="onCartKeydown($event)"
 >
   <div class="cart-header">
-    <h3 id="cart-title">ðŸ›’ Shopping Cart</h3>
-    <button #cartClose class="cart-close" (click)="toggleCart()" aria-label="Close cart">&times;</button>
+    <div class="cart-header-copy">
+      <p class="cart-kicker">FinishFino Store</p>
+      <h3 id="cart-title">Shopping Cart</h3>
+    </div>
+    <div class="cart-header-actions">
+      <span class="cart-count-pill">{{ cartCount }} {{ cartCount === 1 ? 'item' : 'items' }}</span>
+      <button #cartClose class="cart-close" (click)="toggleCart()" aria-label="Close cart">&times;</button>
+    </div>
   </div>
 
   <div class="cart-items" *ngIf="!checkoutOpen && !orderPlaced">
-    <p class="cart-empty" *ngIf="cartItems.length === 0">Your cart is empty â€” start shopping to add items.</p>
+    <p class="cart-empty" *ngIf="cartItems.length === 0">
+      <span class="cart-empty-icon" aria-hidden="true">&#128722;</span>
+      Your cart is empty. Add products to get started.
+    </p>
 
     <div class="cart-item" *ngFor="let item of cartItems; let i = index">
-      <div class="cart-item-info">
-        <div class="cart-item-name">{{ item.name }}</div>
-        <div class="cart-item-price">${{ item.price.toFixed(2) }} each</div>
+      <div class="cart-item-top">
+        <div class="cart-item-info">
+          <div class="cart-item-name">{{ item.name }}</div>
+          <div class="cart-item-meta">
+            <span class="cart-item-price">${{ item.price.toFixed(2) }} each</span>
+            <span class="cart-item-line">${{ (item.price * item.quantity).toFixed(2) }}</span>
+          </div>
+        </div>
+        <button class="cart-item-remove" (click)="removeFromCart(i)">Remove</button>
       </div>
 
       <div class="cart-item-controls">
         <button class="qty-btn" (click)="decrementQuantity(i)" aria-label="Decrease quantity">-</button>
         <span class="qty-value">{{ item.quantity }}</span>
         <button class="qty-btn" (click)="incrementQuantity(i)" aria-label="Increase quantity">+</button>
-        <button class="cart-item-remove" (click)="removeFromCart(i)">Remove</button>
       </div>
     </div>
   </div>
@@ -204,7 +229,7 @@
   <div class="cart-items checkout-panel" *ngIf="checkoutOpen">
     <div class="checkout-header">
       <h4>Checkout</h4>
-      <p>Review your order and enter delivery details.</p>
+      <p>Review your order, then enter delivery and payment account details.</p>
     </div>
 
     <div class="checkout-order-table">
@@ -220,13 +245,16 @@
       </div>
     </div>
 
-    <form #checkoutForm="ngForm" class="checkout-form" (ngSubmit)="submitCheckout(checkoutForm)" novalidate>
+    <form #checkoutForm="ngForm" class="checkout-form" novalidate>
+      <h5 class="checkout-form-title">Shipping Details</h5>
+
       <label>
         Full Name
         <input
           type="text"
           name="fullName"
           [(ngModel)]="checkoutData.fullName"
+          (ngModelChange)="onCheckoutFieldChange()"
           #fullName="ngModel"
           required
           [attr.aria-invalid]="checkoutSubmitted && fullName.invalid ? 'true' : null"
@@ -241,6 +269,7 @@
           type="email"
           name="email"
           [(ngModel)]="checkoutData.email"
+          (ngModelChange)="onCheckoutFieldChange()"
           #email="ngModel"
           required
           email
@@ -256,6 +285,7 @@
           type="tel"
           name="phone"
           [(ngModel)]="checkoutData.phone"
+          (ngModelChange)="onCheckoutFieldChange()"
           #phone="ngModel"
           required
           [attr.aria-invalid]="checkoutSubmitted && phone.invalid ? 'true' : null"
@@ -269,6 +299,7 @@
         <textarea
           name="address"
           [(ngModel)]="checkoutData.address"
+          (ngModelChange)="onCheckoutFieldChange()"
           #address="ngModel"
           rows="3"
           required
@@ -278,37 +309,61 @@
         <span class="checkout-error" *ngIf="checkoutSubmitted && address.invalid" id="checkout-address-error">Address is required.</span>
       </label>
 
+      <div class="checkout-section">
+        <div class="checkout-section-header card-entry-header">
+          <h5>Pay with PayPal</h5>
+        </div>
+
+        <p class="checkout-encryption-line">
+          <span class="lock-dot" aria-hidden="true"></span>
+          Complete shipping details, then use the PayPal button below.
+        </p>
+
+        <div class="checkout-card-brands" aria-label="Accepted cards">
+          <span class="card-brand paypal">PayPal</span>
+        </div>
+        <p class="checkout-error" *ngIf="paypalErrorMessage">{{ paypalErrorMessage }}</p>
+        <p class="checkout-encryption-line" *ngIf="paypalLoading">Loading PayPal checkout...</p>
+        <div #paypalButtons class="paypal-buttons-host" [attr.aria-busy]="paypalLoading ? 'true' : null"></div>
+      </div>
+
       <div class="checkout-actions">
-        <button type="submit" class="btn-primary">Place Order</button>
+        <div class="checkout-place-order-total">
+          <span class="checkout-place-order-amount">${{ cartTotal.toFixed(2) }}</span>
+          <span class="checkout-place-order-note">Total due today</span>
+        </div>
         <button type="button" class="btn-secondary" (click)="closeCheckout()">Back to Cart</button>
       </div>
     </form>
   </div>
 
   <div class="cart-items order-success" *ngIf="orderPlaced">
-    <div class="success-check">✓</div>
+    <div class="success-check">&#10003;</div>
     <h4>Order placed</h4>
     <p>Your checkout was completed successfully.</p>
     <p class="order-number">Order #: {{ orderNumber }}</p>
     <button class="btn-primary" (click)="toggleCart()">Continue Shopping</button>
   </div>
 
-  <div class="cart-footer" *ngIf="!orderPlaced">
+  <div class="cart-footer" *ngIf="!orderPlaced && !checkoutOpen">
     <div class="cart-total">
-      <span>Total:</span>
-      <span>${{ cartTotal.toFixed(2) }}</span>
+      <div>
+        <span class="cart-total-label">Subtotal</span>
+        <span class="cart-total-count">{{ cartCount }} {{ cartCount === 1 ? 'item' : 'items' }}</span>
+      </div>
+      <span class="cart-total-amount">${{ cartTotal.toFixed(2) }}</span>
     </div>
 
     <div class="cart-auth-note" *ngIf="!isLoggedIn">
       Please sign in to complete checkout.
     </div>
 
-    <button class="btn-primary"
+    <button class="btn-primary cart-checkout-btn"
             (click)="openCheckout()"
-            [disabled]="cartItems.length === 0 || checkoutOpen || !isLoggedIn">
-      Checkout
+            [disabled]="cartItems.length === 0 || !isLoggedIn">
+      Proceed to Checkout
     </button>
-    <button class="btn-secondary" (click)="toggleCart()" *ngIf="!checkoutOpen">Continue Shopping</button>
+    <button class="btn-secondary cart-continue-btn" (click)="toggleCart()">Continue Shopping</button>
   </div>
 </div>
 

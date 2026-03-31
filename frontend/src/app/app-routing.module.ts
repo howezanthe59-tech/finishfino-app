@@ -2,25 +2,19 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { HomeComponent }     from './pages/home/home.component';
-import { AboutComponent }    from './pages/about/about.component';
-import { ProductsComponent } from './pages/products/products.component';
-import { BookComponent }     from './pages/book/book.component';
-import { ContactComponent }  from './pages/contact/contact.component';
-import { LoginComponent }    from './pages/login/login.component';
-import { TermsComponent }    from './pages/terms/terms.component';
-import { PrivacyComponent }  from './pages/privacy/privacy.component';
-import { ProfileComponent }  from './pages/profile/profile.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { ServicesComponent } from './pages/services/services.component';
-import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
-import { AuthGuard } from './services/auth.guard';
 import { AdminGuard } from './services/admin.guard';
 import { CustomerGuard } from './services/customer.guard';
 
 const routes: Routes = [
   { path: '',        component: HomeComponent },
-  { path: 'about',   component: AboutComponent },
-  { path: 'services',component: ServicesComponent },
+  {
+    path: 'about',
+    loadChildren: () => import('./pages/about/about.module').then(m => m.AboutModule)
+  },
+  {
+    path: 'services',
+    loadChildren: () => import('./pages/services/services.module').then(m => m.ServicesModule)
+  },
   {
     path: 'products',
     loadChildren: () => import('./pages/products/products.module').then(m => m.ProductsModule)
@@ -34,7 +28,14 @@ const routes: Routes = [
     path: 'contact',
     loadChildren: () => import('./pages/contact/contact.module').then(m => m.ContactModule)
   },
-  { path: 'login',   component: LoginComponent },
+  {
+    path: 'login',
+    loadChildren: () => import('./pages/login/login.module').then(m => m.LoginModule)
+  },
+  {
+    path: 'reset-password',
+    loadChildren: () => import('./pages/reset-password/reset-password.module').then(m => m.ResetPasswordModule)
+  },
   {
     path: '', 
     loadChildren: () => import('./pages/profile/user.module').then(m => m.UserModule),
@@ -45,8 +46,14 @@ const routes: Routes = [
     loadChildren: () => import('./pages/admin-dashboard/admin-dashboard.module').then(m => m.AdminDashboardModule),
     canActivate: [AdminGuard]
   },
-  { path: 'terms',   component: TermsComponent },
-  { path: 'privacy', component: PrivacyComponent },
+  {
+    path: 'terms',
+    loadChildren: () => import('./pages/terms/terms.module').then(m => m.TermsModule)
+  },
+  {
+    path: 'privacy',
+    loadChildren: () => import('./pages/privacy/privacy.module').then(m => m.PrivacyModule)
+  },
   { path: '**',      redirectTo: '' }   // 404 fallback
 ];
 

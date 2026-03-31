@@ -4,7 +4,7 @@ const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
-const BUSINESS_EMAIL = 'finishfinocleaningpro@gmail.com';
+const BUSINESS_EMAIL = process.env.BUSINESS_EMAIL || 'finishfinocleaningpro@gmail.com';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let sendGridConfigured = false;
@@ -36,8 +36,8 @@ function coerceString(value) {
 function configureSendGrid() {
   if (sendGridConfigured) return true;
 
-  // Prefer SENDGRID_API_KEY; fallback keeps older SMTP-based env files working.
-  const apiKey = coerceString(process.env.SENDGRID_API_KEY || process.env.SMTP_PASS).trim();
+  // Require an explicit SendGrid API key so we always use the intended account.
+  const apiKey = coerceString(process.env.SENDGRID_API_KEY).trim();
   if (!apiKey) return false;
 
   sgMail.setApiKey(apiKey);
@@ -68,7 +68,7 @@ router.post('/', contactLimiter, async (req, res) => {
   }
 
   if (!configureSendGrid()) {
-    console.error('Missing SendGrid key. Set SENDGRID_API_KEY (recommended) or SMTP_PASS.');
+    console.error('Missing SendGrid key. Set SENDGRID_API_KEY.');
     return res.status(500).json({ message: 'Failed to send message' });
   }
 
@@ -90,7 +90,19 @@ ${message}`
     await withTimeout(sgMail.send(emailPayload), sendTimeoutMs, 'Contact email send');
     return res.status(200).json({ message: 'Message sent successfully' });
   } catch (err) {
-    console.error('Contact send error', err?.response?.body || err);
+    const sendGridError = err?.response?.body;
+    const hasSenderIdentityError = Array.isArray(sendGridError?.errors)
+      && sendGridError.errors.some((item) => item?.field === 'from');
+
+    if (hasSenderIdentityError) {
+      console.error(
+        'Contact send failed: sender identity mismatch. Verify this exact sender in the same SendGrid account used by SENDGRID_API_KEY.',
+        { from: BUSINESS_EMAIL }
+      );
+    } else {
+      console.error('Contact send error', sendGridError || err);
+    }
+
     return res.status(500).json({ message: 'Failed to send message' });
   }
 });

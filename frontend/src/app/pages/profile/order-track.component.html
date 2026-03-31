@@ -1,0 +1,38 @@
+<section class="track-page">
+  <div class="track-card">
+    <div class="track-head">
+      <div>
+        <h1>Track Order</h1>
+        <p>See where your order is in the process.</p>
+      </div>
+      <button type="button" class="btn-secondary btn-small" (click)="goBack()">← Back to Profile</button>
+    </div>
+
+    <div class="track-state" *ngIf="loading">Loading order details...</div>
+    <div class="track-state error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+
+    <div *ngIf="!loading && order">
+      <div class="order-summary">
+        <p><strong>Order:</strong> #{{ order.order_id }}</p>
+        <p><strong>Order Status:</strong> {{ getStatusLabel(order.order_status) }}</p>
+        <p><strong>Payment Status:</strong> {{ getStatusLabel(order.payment_status) }}</p>
+        <p><strong>Total Items:</strong> {{ order.total_items || 0 }}</p>
+      </div>
+
+      <div class="stepper" aria-label="Order progress">
+        <div
+          class="step"
+          *ngFor="let step of steps; let i = index"
+          [class.complete]="isStepComplete(i)"
+          [class.current]="isCurrentStep(i)"
+        >
+          <div class="step-head">
+            <span class="step-circle">{{ i + 1 }}</span>
+            <span class="step-line" *ngIf="i < steps.length - 1"></span>
+          </div>
+          <span class="step-label">{{ step }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

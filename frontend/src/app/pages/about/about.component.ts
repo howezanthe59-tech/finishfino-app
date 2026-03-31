@@ -14,21 +14,21 @@ export class AboutComponent implements OnInit {
 
   services = [
     {
-      image: 'assets/images/resident.jpeg',
+      image: 'assets/images/resident.webp',
       alt: 'Residential Cleaning',
       title: 'Residential Cleaning',
       icon: '🏠',
       description: 'We provide thorough home cleaning that leaves every room sparkling and hygienic. From routine maintenance to deep cleaning, we handle it all.'
     },
     {
-      image: 'assets/images/commmericial.jpeg',
+      image: 'assets/images/commmericial.webp',
       alt: 'Commercial Cleaning',
       title: 'Commercial Cleaning',
       icon: '🏢',
       description: 'Professional office and business cleaning services to maintain a healthy work environment. We work around your schedule to minimize disruption.'
     },
     {
-      image: 'assets/images/janito.jpeg',
+      image: 'assets/images/janito.webp',
       alt: 'Janitorial Services',
       title: 'Janitorial Services',
       icon: '🧹',

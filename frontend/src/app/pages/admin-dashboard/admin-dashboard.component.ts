@@ -8,6 +8,17 @@ import { AdminService, AdminUserRow, AdminProductRow } from '../../services/admi
 
 type ProductStatusFilter = 'all' | 'in_stock' | 'out_of_stock';
 type ProductModalMode = 'create' | 'edit';
+type CustomerSortOption = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
+type OrderStatusFilter = 'all' | 'paid' | 'pending';
+type OrderDateFilter = 'all' | 'today' | 'last7';
+type OrderSortOption = 'newest' | 'oldest';
+
+interface GroupedOrderStream {
+  userKey: string;
+  userName: string;
+  userEmail: string;
+  orders: OrderHistoryItem[];
+}
 
 interface AdminProductDraft {
   id?: string;
@@ -53,6 +64,16 @@ export class AdminDashboardComponent implements OnInit {
   productsSuccess: string | null = null;
   filters = { email: '', userId: '' };
   activeTab: 'overview' | 'bookings' | 'orders' | 'customers' | 'products' = 'overview';
+  orderSearchQuery = '';
+  orderStatusFilter: OrderStatusFilter = 'all';
+  orderDateFilter: OrderDateFilter = 'all';
+  orderSort: OrderSortOption = 'newest';
+  expandedOrderIds = new Set<string>();
+  customerSearchQuery = '';
+  customerSort: CustomerSortOption = 'date_desc';
+  showTestUsers = false;
+  customerPage = 1;
+  readonly customerPageSize = 10;
 
   productQuery = '';
   productCategoryFilter = 'all';
@@ -223,6 +244,7 @@ export class AdminDashboardComponent implements OnInit {
       next: (rows) => {
         this.orders = rows;
         this.recentOrders = this.getRecentOrders(rows);
+        this.expandedOrderIds.clear();
         this.loadingOrders = false;
       },
       error: () => {
@@ -244,6 +266,7 @@ export class AdminDashboardComponent implements OnInit {
     this.adminService.getUsers(token).subscribe({
       next: (rows) => {
         this.users = rows;
+        this.customerPage = 1;
         this.loadingUsers = false;
       },
       error: () => {
@@ -558,9 +581,185 @@ export class AdminDashboardComponent implements OnInit {
     return this.bookings.filter((b) => this.isPending(b.status)).length;
   }
 
+  get filteredOrders(): OrderHistoryItem[] {
+    const query = this.orderSearchQuery.trim().toLowerCase();
+    const usersById = this.buildUsersById();
+    const startOfToday = this.startOfToday();
+    const last7Start = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    const visible = this.orders.filter((order) => {
+      const statusMatches = this.matchesOrderStatus(order);
+      if (!statusMatches) return false;
+
+      const createdAt = this.parseDate(order.createdAt);
+      if (this.orderDateFilter === 'today' && (createdAt <= 0 || createdAt < startOfToday)) return false;
+      if (this.orderDateFilter === 'last7' && (createdAt <= 0 || createdAt < last7Start)) return false;
+
+      if (!query) return true;
+
+      const orderId = (order.id || '').toLowerCase();
+      const userId = String(order.userId || '').trim();
+      const user = userId ? usersById.get(userId) : undefined;
+      const email = (user?.email || '').toLowerCase();
+      const normalizedUserId = userId.toLowerCase();
+
+      return orderId.includes(query) || email.includes(query) || normalizedUserId.includes(query);
+    });
+
+    return [...visible].sort((a, b) => {
+      if (this.orderSort === 'oldest') {
+        return this.parseDate(a.createdAt) - this.parseDate(b.createdAt);
+      }
+      return this.parseDate(b.createdAt) - this.parseDate(a.createdAt);
+    });
+  }
+
+  get groupedOrders(): GroupedOrderStream[] {
+    const usersById = this.buildUsersById();
+    const groups = new Map<string, GroupedOrderStream>();
+
+    for (const order of this.filteredOrders) {
+      const userId = String(order.userId || '').trim();
+      const user = userId ? usersById.get(userId) : undefined;
+      const email = (user?.email || '').trim();
+      const name = (user?.full_name || '').trim();
+      const shortId = this.shortenIdentifier(userId);
+
+      const key = userId || email || `unknown-${this.shortenIdentifier(order.id)}`;
+      const userName = name || (email ? email.split('@')[0] : `User ${shortId || 'unknown'}`);
+      const userEmail = email || (shortId ? `ID: ${shortId}` : 'ID unavailable');
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          userKey: key,
+          userName,
+          userEmail,
+          orders: []
+        });
+      }
+
+      groups.get(key)!.orders.push(order);
+    }
+
+    return Array.from(groups.values());
+  }
+
+  onOrderFiltersChanged(): void {
+    this.expandedOrderIds.clear();
+  }
+
+  toggleOrderExpanded(orderId: string): void {
+    if (!orderId) return;
+    if (this.expandedOrderIds.has(orderId)) {
+      this.expandedOrderIds.delete(orderId);
+    } else {
+      this.expandedOrderIds.add(orderId);
+    }
+  }
+
+  isOrderExpanded(orderId: string): boolean {
+    return this.expandedOrderIds.has(orderId);
+  }
+
+  isPaidOrder(status?: string | null): boolean {
+    const normalized = (status || '').toLowerCase();
+    return normalized.includes('paid') && !normalized.includes('pending') && !normalized.includes('fail');
+  }
+
+  getOrderStatusLabel(status?: string | null): string {
+    return this.isPaidOrder(status) ? 'Paid' : 'Pending';
+  }
+
+  orderStatusClass(status?: string | null): string {
+    return this.isPaidOrder(status) ? 'order-status-paid' : 'order-status-pending';
+  }
+
+  shortOrderId(orderId?: string | null): string {
+    return this.shortenIdentifier(orderId);
+  }
+
+  formatPaymentMethod(order: OrderHistoryItem): string {
+    const accountType = (order.paymentAccountType || 'Account').trim();
+    const last4 = String(order.paymentAccountLast4 || '').replace(/\D/g, '').slice(-4);
+    return last4 ? `${accountType} - ****${last4}` : accountType;
+  }
+
+  get filteredUsers(): AdminUserRow[] {
+    const query = this.customerSearchQuery.trim().toLowerCase();
+
+    const visible = this.users.filter((user) => {
+      if (!this.showTestUsers && this.isTestUser(user)) return false;
+      if (!query) return true;
+
+      const name = (user.full_name || '').toLowerCase();
+      const email = (user.email || '').toLowerCase();
+      return name.includes(query) || email.includes(query);
+    });
+
+    return [...visible].sort((a, b) => {
+      switch (this.customerSort) {
+        case 'name_asc':
+          return (a.full_name || '').localeCompare((b.full_name || ''), undefined, { sensitivity: 'base' });
+        case 'name_desc':
+          return (b.full_name || '').localeCompare((a.full_name || ''), undefined, { sensitivity: 'base' });
+        case 'date_asc':
+          return this.parseDate(a.created_at) - this.parseDate(b.created_at);
+        case 'date_desc':
+        default:
+          return this.parseDate(b.created_at) - this.parseDate(a.created_at);
+      }
+    });
+  }
+
+  get pagedUsers(): AdminUserRow[] {
+    const users = this.filteredUsers;
+    const current = this.customerCurrentPage;
+    const start = (current - 1) * this.customerPageSize;
+    return users.slice(start, start + this.customerPageSize);
+  }
+
+  get customerTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.customerPageSize));
+  }
+
+  get customerCurrentPage(): number {
+    return Math.min(Math.max(1, this.customerPage), this.customerTotalPages);
+  }
+
+  onCustomerFiltersChanged(): void {
+    this.customerPage = 1;
+  }
+
+  goToPreviousCustomerPage(): void {
+    if (this.customerPage > 1) {
+      this.customerPage -= 1;
+    }
+  }
+
+  goToNextCustomerPage(): void {
+    if (this.customerPage < this.customerTotalPages) {
+      this.customerPage += 1;
+    }
+  }
+
+  private isTestUser(user: AdminUserRow): boolean {
+    const email = (user.email || '').toLowerCase();
+    if (email.includes('example.com')) return true;
+
+    const fullName = (user.full_name || '').toLowerCase();
+    return fullName.includes('test') || fullName.includes('smoke') || fullName.includes('cookie');
+  }
+
   private isPending(status?: string | null): boolean {
     const normalized = (status || '').toString().toLowerCase();
     return normalized.includes('pending');
+  }
+
+  private matchesOrderStatus(order: OrderHistoryItem): boolean {
+    if (this.orderStatusFilter === 'all') return true;
+    const paid = this.isPaidOrder(order.status);
+    if (this.orderStatusFilter === 'paid') return paid;
+    return !paid;
   }
 
   private getRecentBookings(rows: BookingPayload[]): BookingPayload[] {
@@ -579,6 +778,23 @@ export class AdminDashboardComponent implements OnInit {
     if (!value) return 0;
     const ts = Date.parse(value);
     return Number.isNaN(ts) ? 0 : ts;
+  }
+
+  private shortenIdentifier(value?: string | null, length = 8): string {
+    const raw = String(value || '').trim();
+    return raw ? raw.slice(0, length) : '';
+  }
+
+  private startOfToday(): number {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now.getTime();
+  }
+
+  private buildUsersById(): Map<string, AdminUserRow> {
+    return new Map(
+      this.users.map((user) => [String(user.id || '').trim(), user])
+    );
   }
 
   private blankProductDraft(): AdminProductDraft {

@@ -181,9 +181,14 @@ textarea {
   text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   color: var(--text-dark);
   font-size: 0.95rem;
+}
+
+.track-btn {
+  align-self: flex-end;
+  text-decoration: none;
 }
 
 .muted {

@@ -1,11 +1,10 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ProfileService } from '../../services/profile.service';
 import { ProductCartService, ProductCartItem } from '../../services/product-cart.service';
-import { OrderService, OrderPayload } from '../../services/order.service';
+import { OrderService, OrderPayload, PayPalCaptureOrderResponse, PayPalConfigResponse, PayPalCreateOrderResponse } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 export interface Product {
   id: string;
@@ -21,6 +20,7 @@ export interface Product {
 }
 
 export interface Bundle {
+  id: string;
   icon: string;
   name: string;
   savings: string;
@@ -45,6 +45,12 @@ interface CheckoutFormData {
   address: string;
 }
 
+declare global {
+  interface Window {
+    paypal?: any;
+  }
+}
+
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
@@ -55,10 +61,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
   @ViewChild('productModalClose') productModalCloseRef?: ElementRef<HTMLButtonElement>;
   @ViewChild('cartPanel') cartPanelRef?: ElementRef<HTMLElement>;
   @ViewChild('cartClose') cartCloseRef?: ElementRef<HTMLButtonElement>;
+  @ViewChild('paypalButtons') paypalButtonsRef?: ElementRef<HTMLDivElement>;
   cartOpen = false;
   checkoutOpen = false;
   checkoutSubmitted = false;
   orderPlaced = false;
+  paypalReady = false;
+  paypalLoading = false;
+  paypalErrorMessage = '';
   cartItems: ProductCartItem[] = [];
   selectedProduct: Product | null = null;
   modalOpen = false;
@@ -66,6 +76,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
   private lastFocusedElement: HTMLElement | null = null;
   private lastFocusedCartElement: HTMLElement | null = null;
+  private paypalScriptPromise: Promise<void> | null = null;
+  private paypalConfig: PayPalConfigResponse | null = null;
+  private paypalButtonActions: any = null;
 
   checkoutData: CheckoutFormData = {
     fullName: '',
@@ -76,9 +89,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   products: Product[] = [
     {
-      id: 'multi-surface-soap',
+      id: 'multi-surface',
       name: 'ProClean Multi-Surface Soap',
-      image: 'assets/images/multi surface.jpeg',
+      image: 'assets/images/multi surface.webp',
       alt: 'ProClean Multi-Surface Soap',
       badge: 'Best Seller',
       price: 24.99,
@@ -89,7 +102,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'disinfectant',
       name: 'FinishFino Disinfectant Spray',
-      image: 'assets/images/disinnfectant .jpeg',
+      image: 'assets/images/disinfectant.webp',
       alt: 'FinishFino Disinfectant Spray',
       badge: 'New',
       badgeNew: true,
@@ -101,7 +114,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'bleach',
       name: 'Professional Strength Bleach',
-      image: 'assets/images/bleach.jpeg',
+      image: 'assets/images/bleach.webp',
       alt: 'Professional Strength Bleach',
       price: 12.99,
       emoji: '⚪',
@@ -109,9 +122,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
       features: ['Maximum strength formula', 'Whitens & brightens', 'Removes tough stains', '64 oz (1.89L)']
     },
     {
-      id: 'microfiber',
+      id: 'cloths',
       name: 'Premium Microfiber Cloths',
-      image: 'assets/images/cloth.jpeg',
+      image: 'assets/images/cloth.webp',
       alt: 'Premium Microfiber Cloths',
       badge: 'Popular',
       price: 16.99,
@@ -122,7 +135,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'fresh-linen',
       name: 'Fresh Linen Home Spray',
-      image: 'assets/images/home spray.jpeg',
+      image: 'assets/images/home spray.webp',
       alt: 'Fresh Linen Home Spray',
       price: 14.99,
       emoji: '🌸',
@@ -132,7 +145,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'lavender',
       name: 'Lavender Dreams Home Spray',
-      image: 'assets/images/lavender dreams.jpeg',
+      image: 'assets/images/lavender dreams.webp',
       alt: 'Lavender Dreams Home Spray',
       price: 14.99,
       emoji: '💜',
@@ -142,7 +155,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'citrus',
       name: 'Citrus Burst Home Spray',
-      image: 'assets/images/citrus blast.jpeg',
+      image: 'assets/images/citrus blast.webp',
       alt: 'Citrus Burst Home Spray',
       price: 14.99,
       emoji: '🍋',
@@ -152,7 +165,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'glass-cleaner',
       name: 'Streak-Free Glass Cleaner',
-      image: 'assets/images/Glass cleaner.jpeg',
+      image: 'assets/images/Glass cleaner.webp',
       alt: 'Streak-Free Glass Cleaner',
       price: 11.99,
       emoji: '🪟',
@@ -162,7 +175,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       id: 'all-purpose',
       name: 'Ultimate All-Purpose Cleaner',
-      image: 'assets/images/soap.jpeg',
+      image: 'assets/images/soap.webp',
       alt: 'Ultimate All-Purpose Cleaner',
       badge: 'Best Value',
       price: 22.99,
@@ -180,6 +193,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       items: ['Multi-Surface Soap', 'Professional Strength Bleach', 'Disinfectant', 'Microfiber Cloths (Pack of 12)', 'Fresh Linen Spray'],
       originalPrice: 88.96,
       bundlePrice: 73.99,
+      id: 'bundle-home',
       cartName: 'Home Essentials Bundle'
     },
     {
@@ -189,6 +203,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       items: ['Multi-Surface Soap', 'Disinfectant', 'Professional Bleach', 'Microfiber Cloths (Pack of 12)', 'Streak-Free Glass Cleaner'],
       originalPrice: 196.95,
       bundlePrice: 71.99,
+      id: 'bundle-commercial',
       cartName: 'Commercial Bundle',
       featured: true
     },
@@ -199,6 +214,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       items: ['Fresh Linen Spray', 'Disinfectant', 'Microfiber Cloths (Pack of 12)', 'Professional Bleach', 'All-Purpose Cleaner'],
       originalPrice: 86.95,
       bundlePrice: 75.99,
+      id: 'bundle-fresh-space',
       cartName: 'Fresh Space Bundle'
     }
   ];
@@ -215,12 +231,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private orderService: OrderService,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.sub = this.productCart.items$.subscribe((items) => {
       this.cartItems = items;
+      this.updatePayPalButtonState();
     });
     this.route.queryParams.subscribe((params) => {
       if (params['cart'] === 'open') {
@@ -294,7 +312,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.productCart.remove(item.id);
   }
 
-  openCheckout(): void {
+  async openCheckout(): Promise<void> {
     if (!this.cartItems.length) {
       return;
     }
@@ -305,55 +323,252 @@ export class ProductsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const hasSession = await this.ensureActiveSession();
+    if (!hasSession) return;
+
     this.applyProfileToCheckout();
     this.checkoutOpen = true;
+    this.checkoutSubmitted = false;
+    this.paypalErrorMessage = '';
     if (!this.cartOpen) {
       this.openCartPanel();
     }
     this.orderPlaced = false;
+    void this.preparePayPalCheckout();
   }
 
   closeCheckout(): void {
     this.checkoutOpen = false;
     this.checkoutSubmitted = false;
+    this.paypalReady = false;
+    this.paypalLoading = false;
+    this.paypalErrorMessage = '';
+    this.paypalButtonActions = null;
   }
 
-  submitCheckout(form: NgForm): void {
-    this.checkoutSubmitted = true;
-
-    if (form.invalid || !this.cartItems.length) {
-      return;
+  onCheckoutFieldChange(): void {
+    if (this.paypalErrorMessage === 'Please complete all required shipping details before paying.') {
+      this.paypalErrorMessage = '';
     }
+    this.updatePayPalButtonState();
+  }
 
-    const token = this.authService.getToken();
-    if (!token) {
-      this.cartOpen = false;
-      this.router.navigate(['/login']);
-      return;
+  private async preparePayPalCheckout(): Promise<void> {
+    if (!this.checkoutOpen) return;
+
+    this.paypalLoading = true;
+    this.paypalReady = false;
+    this.paypalErrorMessage = '';
+
+    try {
+      if (!this.paypalConfig) {
+        this.paypalConfig = await firstValueFrom(this.orderService.getPayPalConfig());
+      }
+      await this.ensurePayPalScript(this.paypalConfig.clientId, this.paypalConfig.currency || 'USD');
+      await this.renderPayPalButtons();
+      this.paypalReady = true;
+    } catch (err: any) {
+      this.paypalErrorMessage = err?.error?.error || err?.message || 'Failed to load PayPal checkout.';
+    } finally {
+      this.paypalLoading = false;
     }
+  }
 
-    const payload: OrderPayload = {
-      items: this.cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-      totals: { total: this.cartTotal, deposit: 0, balance: 0 },
-      customer: { ...this.checkoutData }
-    };
+  private async ensurePayPalScript(clientId: string, currency: string): Promise<void> {
+    if (window.paypal) return;
+    if (this.paypalScriptPromise) return this.paypalScriptPromise;
 
-    this.orderService.submitOrder(payload, token).subscribe({
-      next: (res) => {
-        this.orderNumber = res.orderId || `FF-${Date.now().toString().slice(-6)}`;
-        this.productCart.clear();
-        this.cartItems = [];
-        this.checkoutOpen = false;
-        this.orderPlaced = true;
-        this.cartOpen = true;
-        this.checkoutSubmitted = false;
-        this.checkoutData = { fullName: '', email: '', phone: '', address: '' };
-        form.resetForm(this.checkoutData);
+    this.paypalScriptPromise = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-paypal-sdk="true"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('Failed to load PayPal SDK script.')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture&locale=en_US`;
+      script.async = true;
+      script.defer = true;
+      script.setAttribute('data-paypal-sdk', 'true');
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load PayPal SDK script.'));
+      document.head.appendChild(script);
+    });
+
+    return this.paypalScriptPromise;
+  }
+
+  private async renderPayPalButtons(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const container = this.paypalButtonsRef?.nativeElement;
+    if (!container) throw new Error('PayPal container not found.');
+    if (!window.paypal?.Buttons) throw new Error('PayPal SDK did not initialize correctly.');
+
+    container.innerHTML = '';
+    this.paypalButtonActions = null;
+
+    const buttons = window.paypal.Buttons({
+      style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
+      onInit: (_data: any, actions: any) => {
+        this.paypalButtonActions = actions;
+        this.updatePayPalButtonState();
       },
-      error: () => {
-        alert('Order could not be recorded. Please try again.');
+      onClick: (_data: any, actions: any) => {
+        this.checkoutSubmitted = true;
+        if (!this.isCheckoutFormValid()) {
+          this.paypalErrorMessage = 'Please complete all required shipping details before paying.';
+          this.updatePayPalButtonState();
+          return actions.reject();
+        }
+        this.paypalErrorMessage = '';
+        this.updatePayPalButtonState();
+        return actions.resolve();
+      },
+      createOrder: async () => {
+        this.checkoutSubmitted = true;
+        this.paypalErrorMessage = '';
+
+        if (!this.isCheckoutFormValid()) {
+          this.paypalErrorMessage = 'Please complete all required shipping details before paying.';
+          throw new Error(this.paypalErrorMessage);
+        }
+
+        const token = this.authService.getToken();
+        if (!token) {
+          this.cartOpen = false;
+          this.router.navigate(['/login']);
+          throw new Error('Authentication required.');
+        }
+
+        const payload = this.buildOrderPayload();
+        let created: PayPalCreateOrderResponse | null = null;
+        try {
+          created = await firstValueFrom(this.orderService.createPayPalOrder(payload, token));
+        } catch (err: any) {
+          if (Number(err?.status) === 401) {
+            this.authService.clearToken();
+            this.cartOpen = false;
+            this.router.navigate(['/login'], { queryParams: { returnUrl: '/products' } });
+            this.paypalErrorMessage = 'Your session expired. Please sign in and try again.';
+            throw new Error(this.paypalErrorMessage);
+          }
+          this.paypalErrorMessage = err?.error?.error || err?.message || 'Failed to create PayPal order.';
+          throw err;
+        }
+        if (!created?.paypalOrderId) {
+          throw new Error('PayPal order creation failed.');
+        }
+        return created.paypalOrderId;
+      },
+      onApprove: async (data: { orderID?: string }) => {
+        const paypalOrderId = String(data?.orderID || '').trim();
+        if (!paypalOrderId) throw new Error('Missing PayPal order id.');
+
+        const token = this.authService.getToken();
+        if (!token) {
+          this.cartOpen = false;
+          this.router.navigate(['/login']);
+          throw new Error('Authentication required.');
+        }
+
+        const payload = this.buildOrderPayload();
+        let captured: PayPalCaptureOrderResponse | null = null;
+        try {
+          captured = await firstValueFrom(this.orderService.capturePayPalOrder(paypalOrderId, payload, token));
+        } catch (err: any) {
+          this.ngZone.run(() => {
+            if (Number(err?.status) === 401) {
+              this.authService.clearToken();
+              this.cartOpen = false;
+              this.router.navigate(['/login'], { queryParams: { returnUrl: '/products' } });
+              this.paypalErrorMessage = 'Your session expired. Please sign in and try again.';
+              return;
+            }
+            this.paypalErrorMessage = err?.error?.error || err?.message || 'Failed to capture PayPal payment.';
+          });
+          throw err;
+        }
+
+        this.ngZone.run(() => {
+          this.completeSuccessfulCheckout(captured?.orderId || `FF-${Date.now().toString().slice(-6)}`);
+        });
+      },
+      onCancel: () => {
+        this.ngZone.run(() => {
+          this.paypalErrorMessage = 'PayPal checkout was cancelled.';
+        });
+      },
+      onError: (err: any) => {
+        console.error('PayPal button error', err);
+        this.ngZone.run(() => {
+          this.paypalErrorMessage = 'PayPal checkout failed. Please try again.';
+        });
       }
     });
+
+    if (typeof buttons?.isEligible === 'function' && !buttons.isEligible()) {
+      throw new Error('PayPal is not eligible for this browser/account.');
+    }
+
+    await buttons.render(container);
+  }
+
+  private isCheckoutFormValid(): boolean {
+    const email = String(this.checkoutData.email || '').trim();
+    const fullName = String(this.checkoutData.fullName || '').trim();
+    const phone = String(this.checkoutData.phone || '').trim();
+    const address = String(this.checkoutData.address || '').trim();
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    return !!fullName && emailValid && !!phone && !!address && this.cartItems.length > 0;
+  }
+
+  private updatePayPalButtonState(): void {
+    if (!this.paypalButtonActions) return;
+    try {
+      if (this.isCheckoutFormValid()) {
+        this.paypalButtonActions.enable();
+      } else {
+        this.paypalButtonActions.disable();
+      }
+    } catch {
+      // Ignore transient SDK timing errors while buttons mount.
+    }
+  }
+
+  private buildOrderPayload(): OrderPayload {
+    return {
+      items: this.cartItems.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      totals: { total: this.cartTotal, deposit: 0, balance: 0 },
+      customer: {
+        fullName: this.checkoutData.fullName,
+        email: this.checkoutData.email,
+        phone: this.checkoutData.phone,
+        address: this.checkoutData.address
+      }
+    };
+  }
+
+  private completeSuccessfulCheckout(orderId: string): void {
+    this.orderNumber = orderId || `FF-${Date.now().toString().slice(-6)}`;
+    this.productCart.clear();
+    this.cartItems = [];
+    this.checkoutOpen = false;
+    this.orderPlaced = true;
+    this.cartOpen = true;
+    this.checkoutSubmitted = false;
+    this.paypalReady = false;
+    this.paypalLoading = false;
+    this.paypalErrorMessage = '';
+    this.paypalButtonActions = null;
+    this.checkoutData = {
+      fullName: '',
+      email: '',
+      phone: '',
+      address: ''
+    };
   }
 
   openModal(product: Product): void {
@@ -453,6 +668,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  private async ensureActiveSession(): Promise<boolean> {
+    try {
+      await firstValueFrom(this.authService.me());
+      return true;
+    } catch {
+      this.profileService.clearProfile();
+      this.authService.clearToken();
+      this.cartOpen = false;
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/products' } });
+      this.paypalErrorMessage = 'Your session expired. Please sign in again.';
+      return false;
+    }
+  }
+
   private applyProfileToCheckout(): void {
     const profile = this.profileService.getProfile();
     if (!profile) return;
@@ -490,10 +719,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
     ].join(',');
     return Array.from(container.querySelectorAll<HTMLElement>(selector))
       .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
-  }
-
-  private loadCart(): void {
-    // kept for compatibility, now handled by ProductCartService
   }
 
   ngOnDestroy(): void {

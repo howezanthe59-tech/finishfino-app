@@ -1,4 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { PrivacyComponent } from './privacy.component';
 
@@ -8,7 +12,9 @@ describe('PrivacyComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PrivacyComponent ]
+      imports: [FormsModule, HttpClientTestingModule, RouterTestingModule],
+      declarations: [PrivacyComponent],
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 export interface BookingPayload {
@@ -25,6 +25,8 @@ export interface BookingPayload {
   balance: number;
   userId?: string;
   status: 'Pending' | 'Pending Deposit' | 'Deposit Paid' | 'In Progress' | 'Completed' | 'Balance Paid';
+  health_acknowledged?: boolean;
+  health_notes?: string | null;
 }
 
 interface ApiBookingRow {
@@ -49,6 +51,8 @@ interface ApiBookingRow {
   deposit_cents: number;
   balance_cents: number;
   status?: string | null;
+  health_acknowledged?: boolean;
+  health_notes?: string | null;
 }
 
 export interface BookingFilters {
@@ -68,11 +72,7 @@ export class BookingService {
     return this.http.post<BookingPayload>(this.apiUrl, data, {
       headers: token ? { 'x-auth-token': token } : undefined
     }).pipe(
-      map((res) => res),
-      catchError((err) => {
-        if (err?.status === 401) return throwError(() => err);
-        return of(data); // degrade gracefully for now
-      })
+      map((res) => res)
     );
   }
 

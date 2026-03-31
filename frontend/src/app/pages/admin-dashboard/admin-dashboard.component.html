@@ -1,4 +1,4 @@
-<div class="admin-shell">
+﻿<div class="admin-shell">
   <aside class="admin-rail">
     <div class="rail-brand">
       <span class="brand-mark">FF</span>
@@ -96,7 +96,7 @@
         <div class="status-line" *ngIf="loading">Loading bookings...</div>
         <div class="status-line error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
-        <div class="table-wrap">
+        <div class="table-wrap table-scroll">
           <table class="data-table">
             <thead>
               <tr>
@@ -132,37 +132,7 @@
             <p>Recent order activity across all customers.</p>
           </div>
         </div>
-
-        <div class="status-line" *ngIf="loadingOrders">Loading orders...</div>
-        <div class="status-line error" *ngIf="ordersError">{{ ordersError }}</div>
-
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>User ID</th>
-                <th>Items</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let o of orders">
-                <td>#{{ o.id.slice(0, 8) }}</td>
-                <td class="muted">{{ o.userId }}</td>
-                <td>{{ o.items.length }}</td>
-                <td>{{ o.createdAt | date:'mediumDate' }}</td>
-                <td><span class="badge pending">{{ o.status }}</span></td>
-                <td>${{ o.total.toFixed(2) }}</td>
-              </tr>
-              <tr *ngIf="!loadingOrders && !ordersError && orders.length === 0">
-                <td colspan="6" class="empty">No orders found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ng-container *ngTemplateOutlet="ordersStreamContent"></ng-container>
       </div>
     </section>
 
@@ -174,7 +144,7 @@
             <div class="dot"></div>
             <div>
               <strong>{{ b.fullName }}</strong>
-              <p>{{ b.serviceType | titlecase }} · {{ b.date | date:'mediumDate' }}</p>
+              <p>{{ b.serviceType | titlecase }} - {{ b.date | date:'mediumDate' }}</p>
             </div>
             <span class="timeline-amount">${{ b.total.toFixed(2) }}</span>
           </div>
@@ -191,7 +161,7 @@
             <div class="dot"></div>
             <div>
               <strong>Order #{{ o.id.slice(0, 6) }}</strong>
-              <p>{{ o.items.length }} items · {{ o.createdAt | date:'mediumDate' }}</p>
+              <p>{{ o.total_items || 0 }} items - {{ o.createdAt | date:'mediumDate' }}</p>
             </div>
             <span class="timeline-amount">${{ o.total.toFixed(2) }}</span>
           </div>
@@ -239,7 +209,7 @@
       <div class="status-line" *ngIf="loading">Loading bookings...</div>
       <div class="status-line error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
-      <div class="table-wrap">
+      <div class="table-wrap table-scroll">
         <table class="data-table">
           <thead>
             <tr>
@@ -275,52 +245,144 @@
           <p>Recent order activity across all customers.</p>
         </div>
       </div>
+      <ng-container *ngTemplateOutlet="ordersStreamContent"></ng-container>
+    </section>
+
+    <ng-template #ordersStreamContent>
+      <div class="orders-controls">
+        <div class="filter-field">
+          <label for="orderSearch">Search</label>
+          <input
+            id="orderSearch"
+            type="text"
+            [(ngModel)]="orderSearchQuery"
+            (ngModelChange)="onOrderFiltersChanged()"
+            placeholder="Search by order ID or user email"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label for="orderStatusFilter">Status</label>
+          <select id="orderStatusFilter" [(ngModel)]="orderStatusFilter" (ngModelChange)="onOrderFiltersChanged()">
+            <option value="all">All</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="orderDateFilter">Date</label>
+          <select id="orderDateFilter" [(ngModel)]="orderDateFilter" (ngModelChange)="onOrderFiltersChanged()">
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="last7">Last 7 days</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="orderSort">Sort</label>
+          <select id="orderSort" [(ngModel)]="orderSort" (ngModelChange)="onOrderFiltersChanged()">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
+      </div>
 
       <div class="status-line" *ngIf="loadingOrders">Loading orders...</div>
       <div class="status-line error" *ngIf="ordersError">{{ ordersError }}</div>
 
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>User ID</th>
-              <th>Items</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let o of orders">
-              <td>#{{ o.id.slice(0, 8) }}</td>
-              <td class="muted">{{ o.userId }}</td>
-              <td>{{ o.items.length }}</td>
-              <td>{{ o.createdAt | date:'mediumDate' }}</td>
-              <td><span class="badge pending">{{ o.status }}</span></td>
-              <td>${{ o.total.toFixed(2) }}</td>
-            </tr>
-            <tr *ngIf="!loadingOrders && !ordersError && orders.length === 0">
-              <td colspan="6" class="empty">No orders found.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <div class="orders-groups" *ngIf="!loadingOrders && !ordersError">
+        <article class="order-group-card" *ngFor="let group of groupedOrders">
+          <header class="order-group-header">
+            <div>
+              <h4>{{ group.userName }}</h4>
+              <p>{{ group.userEmail }}</p>
+            </div>
+            <span class="order-group-count">{{ group.orders.length }} order{{ group.orders.length === 1 ? '' : 's' }}</span>
+          </header>
 
-    <section class="panel" *ngIf="activeTab === 'customers'" id="admin-panel-customers" role="tabpanel" aria-labelledby="admin-tab-customers">
+          <div class="order-group-rows">
+            <div class="order-row" *ngFor="let o of group.orders">
+              <div class="order-row-main">
+                <div class="order-left">
+                  <button type="button" class="order-id-btn" (click)="toggleOrderExpanded(o.id)" [attr.aria-expanded]="isOrderExpanded(o.id)">
+                    #{{ shortOrderId(o.id) }}
+                  </button>
+                  <p class="order-date">{{ o.createdAt | date:'mediumDate' }}</p>
+                </div>
+                <div class="order-right">
+                  <span class="badge" [ngClass]="orderStatusClass(o.status)">{{ getOrderStatusLabel(o.status) }}</span>
+                  <strong class="order-amount">${{ o.total.toFixed(2) }}</strong>
+                </div>
+              </div>
+
+              <div class="order-row-meta">
+                <span>{{ o.total_items || 0 }} items</span>
+                <span>{{ formatPaymentMethod(o) }}</span>
+              </div>
+
+              <div class="order-details" *ngIf="isOrderExpanded(o.id)">
+                <ul class="order-item-list" *ngIf="o.items?.length">
+                  <li *ngFor="let item of o.items">
+                    <span>{{ item.name }} x{{ item.quantity }}</span>
+                    <strong>${{ (item.price * item.quantity).toFixed(2) }}</strong>
+                  </li>
+                </ul>
+                <p class="muted small" *ngIf="!o.items?.length">No line-item details for this order.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="empty" *ngIf="groupedOrders.length === 0">No orders found.</div>
+      </div>
+    </ng-template>
+    <section class="panel customers-panel" *ngIf="activeTab === 'customers'" id="admin-panel-customers" role="tabpanel" aria-labelledby="admin-tab-customers">
       <div class="panel-header">
         <div>
           <h3>Customers</h3>
-          <p>All registered users in the system.</p>
+          <p>Real users only by default. Use filters to include test accounts when needed.</p>
         </div>
+      </div>
+
+      <div class="customers-controls">
+        <div class="filter-field">
+          <label for="customerSearch">Search</label>
+          <input
+            id="customerSearch"
+            type="text"
+            [(ngModel)]="customerSearchQuery"
+            (ngModelChange)="onCustomerFiltersChanged()"
+            placeholder="Search by name or email"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label for="customerSort">Sort By</label>
+          <select id="customerSort" [(ngModel)]="customerSort" (ngModelChange)="onCustomerFiltersChanged()">
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+          </select>
+        </div>
+
+        <label class="toggle-field" for="showTestUsersToggle">
+          <input
+            id="showTestUsersToggle"
+            type="checkbox"
+            [(ngModel)]="showTestUsers"
+            (ngModelChange)="onCustomerFiltersChanged()"
+          />
+          <span>Show test users</span>
+        </label>
       </div>
 
       <div class="status-line" *ngIf="loadingUsers">Loading customers...</div>
       <div class="status-line error" *ngIf="usersError">{{ usersError }}</div>
 
-      <div class="table-wrap">
-        <table class="data-table">
+      <div class="table-wrap table-scroll">
+        <table class="data-table customers-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -331,18 +393,32 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let u of users">
-              <td>{{ u.full_name }}</td>
-              <td class="muted">{{ u.email }}</td>
-              <td>{{ u.phone || '—' }}</td>
-              <td>{{ u.role }}</td>
+            <tr *ngFor="let u of pagedUsers">
+              <td>
+                <strong class="customer-name">{{ u.full_name || 'Unnamed user' }}</strong>
+              </td>
+              <td class="muted customer-email">{{ u.email }}</td>
+              <td>{{ u.phone || '-' }}</td>
+              <td>
+                <span class="role-badge">{{ u.role || 'customer' }}</span>
+              </td>
               <td>{{ u.created_at | date:'mediumDate' }}</td>
             </tr>
-            <tr *ngIf="!loadingUsers && !usersError && users.length === 0">
-              <td colspan="5" class="empty">No customers found.</td>
+            <tr *ngIf="!loadingUsers && !usersError && filteredUsers.length === 0">
+              <td colspan="5" class="empty">No users found</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="customers-pagination" *ngIf="!loadingUsers && !usersError && filteredUsers.length > customerPageSize">
+        <button class="btn-secondary small" type="button" (click)="goToPreviousCustomerPage()" [disabled]="customerCurrentPage <= 1">
+          Previous
+        </button>
+        <span class="pagination-label">Page {{ customerCurrentPage }} of {{ customerTotalPages }}</span>
+        <button class="btn-secondary small" type="button" (click)="goToNextCustomerPage()" [disabled]="customerCurrentPage >= customerTotalPages">
+          Next
+        </button>
       </div>
     </section>
 
@@ -421,7 +497,7 @@
           <tbody>
             <tr *ngFor="let p of filteredProducts">
               <td class="cell-image">
-                <img *ngIf="p.image_url" class="thumb" [src]="p.image_url" [alt]="p.name" loading="lazy" />
+                <img *ngIf="p.image_url" class="thumb" [src]="p.image_url" [alt]="p.name" loading="lazy" width="46" height="46" />
                 <div *ngIf="!p.image_url" class="thumb placeholder" aria-hidden="true">{{ (p.name || '?').slice(0, 1) }}</div>
               </td>
               <td>
@@ -541,7 +617,7 @@
                   Product image is required.
                 </div>
                 <div class="image-preview" *ngIf="primaryImagePreviewUrl || productDraft.image_url">
-                  <img class="preview" [src]="primaryImagePreviewUrl || (productDraft.image_url || '')" alt="Product image preview" />
+                  <img class="preview" [src]="primaryImagePreviewUrl || (productDraft.image_url || '')" alt="Product image preview" width="1200" height="675" />
                 </div>
               </div>
 
@@ -592,3 +668,5 @@
     </section>
   </main>
 </div>
+
+

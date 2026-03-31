@@ -14,14 +14,9 @@ export class CustomerGuard implements CanActivate {
   ) {}
 
   canActivate(
-    route: ActivatedRouteSnapshot,
+    _route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | boolean | UrlTree {
-    const token = this.auth.getToken();
-    if (!token) {
-      return this.router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
-    }
-
     const profile = this.profileService.getProfile();
     if (profile) {
       return profile.role === 'admin' ? this.router.createUrlTree(['/admin']) : true;
@@ -34,4 +29,3 @@ export class CustomerGuard implements CanActivate {
     );
   }
 }
-

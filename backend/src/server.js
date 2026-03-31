@@ -1,15 +1,15 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const express    = require('express');
 const cors       = require('cors');
-const bodyParser = require('body-parser');
 const rateLimit  = require('express-rate-limit');
-const path       = require('path');
 
 const bookingRoutes = require('./routes/booking'); // legacy form
 const bookingsApi   = require('./routes/bookings'); // new deposit-backed
 const contactRoutes = require('./routes/contact');
 const authRoutes    = require('./routes/auth');
 const ordersRoutes  = require('./routes/orders');
+const paypalRoutes  = require('./routes/paypal');
 const productsRoutes = require('./routes/products');
 const productsAdminRoutes = require('./routes/productsAdmin');
 const profileRoutes = require('./routes/profile');
@@ -20,14 +20,39 @@ const { init }      = require('./db');
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
+const isProd = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production';
+const allowedOrigins = String(process.env.CORS_ORIGINS || 'http://localhost:4200')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
 // ── Middleware ──────────────────────────────────────────────────────
 app.use(cors({
-  origin: 'http://localhost:4200',  // Angular dev server
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS origin denied.'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'],
+  credentials: true
 }));
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (isProd && (req.secure || String(req.headers['x-forwarded-proto'] || '').includes('https'))) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 // Serve uploaded assets (product images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
@@ -51,6 +76,7 @@ const apiLimiter = rateLimit({
 });
 
 app.use('/api/auth', authLimiter);
+app.use('/auth', authLimiter);
 app.use('/api', apiLimiter);
 
 // ── Routes ──────────────────────────────────────────────────────────
@@ -58,12 +84,21 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/v2/bookings', bookingsApi);
 app.use('/api/contact',  contactRoutes);
 app.use('/api/auth',     authRoutes);
+app.use('/auth',         authRoutes);
+app.use('/api/paypal',   paypalRoutes);
 app.use('/api/orders',   ordersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/products', requireAdminMiddleware, productsAdminRoutes);
 app.use('/api/profile', requireAuthMiddleware, profileRoutes);
 app.use('/api/cookie-consent', cookieConsentRoutes);
 app.use('/api/admin',    requireAdminMiddleware, adminRoutes);
+
+app.use((err, _req, res, next) => {
+  if (err && /CORS/i.test(String(err.message || ''))) {
+    return res.status(403).json({ error: 'Origin not allowed by CORS policy.' });
+  }
+  return next(err);
+});
 
 // ── Health check ────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

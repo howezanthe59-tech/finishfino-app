@@ -48,7 +48,7 @@ const upload = multer({
     },
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname || '').toLowerCase();
-      const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? ext : '.jpg';
+      const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? ext : '.webp';
       cb(null, `${uuid()}${safeExt}`);
     }
   }),

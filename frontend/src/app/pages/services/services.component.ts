@@ -14,7 +14,7 @@ export class ServicesComponent implements OnInit {
 
   services = [
     {
-      image: 'assets/images/jani.jpeg',
+      image: 'assets/images/jani.webp',
       alt: 'Janitorial Services',
       title: 'Janitorial Services',
       description: 'Reliable ongoing cleaning solutions for offices, buildings, and facilities.',
@@ -32,7 +32,7 @@ export class ServicesComponent implements OnInit {
       ]
     },
     {
-      image: 'assets/images/commerc.jpeg',
+      image: 'assets/images/commerc.webp',
       alt: 'Commercial Cleaning',
       title: 'Commercial Cleaning',
       description: 'Maintain a clean and professional environment for your staff and customers.',
@@ -50,7 +50,7 @@ export class ServicesComponent implements OnInit {
       ]
     },
     {
-      image: 'assets/images/resi.jpeg',
+      image: 'assets/images/resi.webp',
       alt: 'Residential Cleaning',
       title: 'Residential Cleaning',
       description: 'Keep your home fresh, clean, and comfortable with our professional house cleaning service.',

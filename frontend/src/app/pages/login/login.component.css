@@ -161,6 +161,17 @@
   line-height: 1.4;
 }
 
+.auth-info-message {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid #98c7b1;
+  border-radius: 12px;
+  background: #eff9f3;
+  color: #1d5f46;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
 .form-options {
   display: flex;
   align-items: center;
@@ -193,6 +204,11 @@
   color: #dd7a16;
   text-decoration: none;
   font-weight: 700;
+}
+
+.forgot-link.disabled {
+  pointer-events: none;
+  opacity: 0.65;
 }
 
 .forgot-link:hover,

@@ -36,10 +36,8 @@ export class BookComponent implements OnInit {
   addOnPrices: PricingMatrix = {
     inside_fridge: 35,
     inside_oven: 30,
-    laundry: 25,
     windows: 40,
-    deep_clean: 60,
-    pets: 20
+    deep_clean: 60
   };
   productOptions = [
     'ProClean Multi-Surface Soap',
@@ -101,13 +99,6 @@ export class BookComponent implements OnInit {
 
   ngOnInit(): void {
     const profile = this.profileService.getProfile();
-
-    // Mandate login for booking
-    if (!profile) {
-      this.router.navigate(['/login'], { queryParams: { returnUrl: '/book' } });
-      return;
-    }
-
     const profileEmail = profile?.email || '';
     const profileName  = profile?.fullName || '';
     const profilePhone = profile?.phone || '';
@@ -171,12 +162,19 @@ export class BookComponent implements OnInit {
       addOns: this.fb.group({
         inside_fridge: [false],
         inside_oven: [false],
-        laundry: [false],
         windows: [false],
-        deep_clean: [false],
-        pets: [false]
-      })
+        deep_clean: [false]
+      }),
+      health_acknowledged: [false, Validators.requiredTrue],
+      hasHealthCondition: ['no', Validators.required],
+      health_notes: ['']
     });
+
+    // Mandate login for booking
+    if (!profile) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/book' } });
+      return;
+    }
 
     this.bookingForm.get('parish')?.valueChanges.subscribe(parish => {
       this.availableCities = this.parishCities[parish] || [];
@@ -350,7 +348,9 @@ export class BookComponent implements OnInit {
       total: this.total,
       deposit: this.deposit,
       balance: this.balance,
-      status: 'Pending'
+      status: 'Pending',
+      health_acknowledged: this.bookingForm.value.health_acknowledged,
+      health_notes: this.bookingForm.value.hasHealthCondition === 'yes' ? this.bookingForm.value.health_notes : null
     };
 
     this.bookingService.submitBooking(payload, token).subscribe(() => {
@@ -404,10 +404,8 @@ export class BookComponent implements OnInit {
     const labels: Record<string, string> = {
       inside_fridge: 'Inside fridge',
       inside_oven: 'Inside oven',
-      laundry: 'Laundry',
       windows: 'Windows',
-      deep_clean: 'Deep clean focus',
-      pets: 'Pet hair extra'
+      deep_clean: 'Deep clean focus'
     };
     return labels[key] || key;
   }

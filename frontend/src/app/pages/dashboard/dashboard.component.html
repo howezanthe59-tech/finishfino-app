@@ -2,7 +2,7 @@
   <div class="dash-header">
     <div class="dash-welcome">
       <div class="welcome-avatar">
-        <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" />
+        <img *ngIf="avatarUrl; else avatarFallback" [src]="avatarUrl" alt="Profile photo" width="56" height="56" />
         <ng-template #avatarFallback>
           <span class="welcome-initials" aria-hidden="true">{{ initials }}</span>
         </ng-template>
@@ -16,7 +16,7 @@
 
   <div class="dash-grid">
     <section class="card">
-      <header><h3>Your Profile</h3></header>
+      <header><h2>Your Profile</h2></header>
       <div *ngIf="profile; else noProfile">
         <p><strong>Name:</strong> {{ profile.fullName }}</p>
         <p><strong>Email:</strong> {{ profile.email }}</p>
@@ -31,7 +31,7 @@
     </section>
 
     <section class="card bookings-card">
-      <header><h3>Recent Bookings</h3></header>
+      <header><h2>Recent Bookings</h2></header>
       <div *ngIf="bookings.length; else emptyBookings">
         <div class="booking-item" *ngFor="let b of bookings">
           <div>
@@ -54,17 +54,18 @@
     </section>
 
     <section class="card orders-card">
-      <header><h3>Recent Orders</h3></header>
+      <header><h2>Recent Orders</h2></header>
       <div *ngIf="orders.length; else emptyOrders">
         <div class="booking-item" *ngFor="let o of orders">
           <div>
-            <strong>{{ o.items.length }} item{{ o.items.length === 1 ? '' : 's' }}</strong>
+            <strong>{{ o.total_items || 0 }} item{{ (o.total_items || 0) === 1 ? '' : 's' }}</strong>
             <p>{{ o.createdAt | date:'mediumDate' }}</p>
             <p class="muted">Order #{{ o.id.slice(0, 8) }}</p>
           </div>
           <div class="booking-totals">
             <span>Total: ${{ o.total.toFixed(2) }}</span>
             <span class="status">Status: {{ o.status }}</span>
+            <a class="btn-secondary btn-small track-btn" [routerLink]="['/orders', o.id, 'track']">Track Order</a>
           </div>
         </div>
       </div>
