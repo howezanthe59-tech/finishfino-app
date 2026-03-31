@@ -77,6 +77,14 @@
 
           <!-- Back -->
           <div class="flip-card-back">
+            <button
+              type="button"
+              class="flip-back-btn"
+              (click)="toggleFlip(i); $event.stopPropagation()"
+              aria-label="Flip back to front"
+            >
+              &#8617;
+            </button>
             <div class="service-icon">{{ service.icon }}</div>
             <h3>{{ service.title }}</h3>
             <p>{{ service.description }}</p>

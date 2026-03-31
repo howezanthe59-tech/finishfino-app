@@ -28,12 +28,15 @@
 
 .footer-logo {
     display: inline-block;
-    margin-bottom: 34px;
+    margin-bottom: 10px;
+    line-height: 0;
 }
 
 .footer-logo-img {
-    width: 140px;
-    height: auto;
+    width: 170px;
+    height: 106px;
+    object-fit: cover;
+    object-position: center 42%;
     display: block;
     filter: brightness(0) invert(1);
 }
@@ -153,7 +156,18 @@
     }
 
     .footer-logo {
-        margin-bottom: 24px;
+        margin-bottom: 6px;
+    }
+
+    .footer-logo-img {
+        width: 128px;
+        height: 80px;
+        object-fit: cover;
+        object-position: center 42%;
+    }
+
+    .footer-brand p {
+        margin: 0 0 22px;
     }
 
     .footer-bottom-bar {

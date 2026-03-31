@@ -218,7 +218,7 @@
 .service-listing-features li::before,
 .product-features li::before,
 .modal-features li::before {
-    content: 'âœ“';
+    content: '\2713';
     color: var(--success-color);
     font-weight: bold;
 }
@@ -372,7 +372,7 @@
     gap: 10px;
 }
 .bundle-items li::before {
-    content: 'ðŸ“¦';
+    content: '\1F4E6';
     font-size: 16px;
 }
 .bundle-pricing {

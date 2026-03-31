@@ -18,7 +18,7 @@
   max-width: 600px;
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  pointer-events: all;
+  pointer-events: auto;
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
