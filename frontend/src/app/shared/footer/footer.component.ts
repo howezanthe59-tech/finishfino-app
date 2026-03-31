@@ -12,4 +12,11 @@ export class FooterComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  openCookieSettings(event: Event): void {
+    event.preventDefault();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ff-open-cookie-popup'));
+    }
+  }
+
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CookieService } from '../../services/cookie.service';
 import { Router } from '@angular/router';
 
@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 })
 export class CookiePopupComponent implements OnInit {
   isVisible = false;
+  private readonly forceOpenKey = 'finishfino_force_cookie_popup';
 
   constructor(
     private cookieService: CookieService,
@@ -16,8 +17,13 @@ export class CookiePopupComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Show popup only if no consent has been given
-    this.isVisible = !this.cookieService.hasConsented();
+    const forceOpen = this.consumeForceOpenFlag();
+    this.isVisible = forceOpen || !this.cookieService.hasConsented();
+  }
+
+  @HostListener('window:ff-open-cookie-popup')
+  onOpenRequested(): void {
+    this.isVisible = true;
   }
 
   acceptAll(): void {
@@ -28,5 +34,15 @@ export class CookiePopupComponent implements OnInit {
   browseSettings(): void {
     this.router.navigate(['/privacy'], { fragment: 'cookie-settings' });
     this.isVisible = false;
+  }
+
+  private consumeForceOpenFlag(): boolean {
+    try {
+      const forceOpen = sessionStorage.getItem(this.forceOpenKey) === '1';
+      if (forceOpen) sessionStorage.removeItem(this.forceOpenKey);
+      return forceOpen;
+    } catch {
+      return false;
+    }
   }
 }

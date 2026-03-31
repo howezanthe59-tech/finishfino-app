@@ -15,6 +15,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private a11yUiLoading = false;
   private cookieUiLoading = false;
   private deferredUiHandler: (() => void) | null = null;
+  private cookieOpenHandler: (() => void) | null = null;
   private cookieFallbackTimer: number | null = null;
 
   constructor(
@@ -30,11 +31,13 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
     this.setupDeferredUiInteractionLoad();
+    this.setupCookiePopupOpenListener();
     this.scheduleCookieFallbackLoad();
   }
 
   ngOnDestroy(): void {
     this.removeDeferredUiInteractionLoad();
+    this.removeCookiePopupOpenListener();
     if (this.cookieFallbackTimer !== null) {
       clearTimeout(this.cookieFallbackTimer);
       this.cookieFallbackTimer = null;
@@ -107,6 +110,25 @@ export class AppComponent implements OnInit, OnDestroy {
     }, 10000);
   }
 
+  private setupCookiePopupOpenListener(): void {
+    const win = this.document.defaultView;
+    if (!win) return;
+
+    const handler = () => {
+      void this.loadCookieUi(true);
+    };
+
+    this.cookieOpenHandler = handler;
+    win.addEventListener('ff-open-cookie-popup', handler as EventListener);
+  }
+
+  private removeCookiePopupOpenListener(): void {
+    const win = this.document.defaultView;
+    if (!win || !this.cookieOpenHandler) return;
+    win.removeEventListener('ff-open-cookie-popup', this.cookieOpenHandler as EventListener);
+    this.cookieOpenHandler = null;
+  }
+
   private async loadA11yUi(): Promise<void> {
     if (this.a11yUiLoading || this.a11yPanelComponent) return;
     this.a11yUiLoading = true;
@@ -118,15 +140,38 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async loadCookieUi(): Promise<void> {
-    if (this.cookieUiLoading || this.cookiePopupComponent || this.hasCookieConsent()) return;
+  private async loadCookieUi(forceOpen = false): Promise<void> {
+    if (this.cookieUiLoading) return;
+    if (forceOpen) this.setForceCookiePopupFlag();
+    if (this.cookiePopupComponent) {
+      if (forceOpen) this.dispatchCookiePopupOpen();
+      return;
+    }
+    if (!forceOpen && this.hasCookieConsent()) return;
     this.cookieUiLoading = true;
     try {
       const cookieCmp = await import('./shared/cookie-popup/cookie-popup.component');
       this.cookiePopupComponent = cookieCmp.CookiePopupComponent;
+      if (forceOpen) this.dispatchCookiePopupOpen();
     } finally {
       this.cookieUiLoading = false;
     }
+  }
+
+  private setForceCookiePopupFlag(): void {
+    const win = this.document.defaultView;
+    if (!win) return;
+    try {
+      win.sessionStorage.setItem('finishfino_force_cookie_popup', '1');
+    } catch {
+      // Ignore storage access failures.
+    }
+  }
+
+  private dispatchCookiePopupOpen(): void {
+    const win = this.document.defaultView;
+    if (!win) return;
+    win.dispatchEvent(new CustomEvent('ff-open-cookie-popup'));
   }
 
   private hasCookieConsent(): boolean {
