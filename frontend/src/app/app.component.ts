@@ -84,7 +84,9 @@ export class AppComponent implements OnInit, OnDestroy {
     const handler = () => {
       this.removeDeferredUiInteractionLoad();
       void this.loadA11yUi();
-      void this.loadCookieUi();
+      // Open cookie popup on first user interaction (click/tap/key),
+      // even for returning users, so settings are always accessible.
+      void this.loadCookieUi(true);
     };
 
     this.deferredUiHandler = handler;

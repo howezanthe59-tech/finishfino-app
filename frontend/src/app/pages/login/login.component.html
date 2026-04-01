@@ -341,13 +341,13 @@
               [attr.aria-invalid]="signupSubmitted && sf['agreeTerms'].errors ? 'true' : null"
               [attr.aria-describedby]="signupSubmitted && sf['agreeTerms'].errors ? 'signup-terms-error' : null"
             />
-            <label for="agreeTerms">
+            <div class="terms-copy">
               I have read and agree to the
-              <a routerLink="/terms" target="_blank">Terms &amp; Conditions</a>
+              <a routerLink="/terms" (click)="$event.stopPropagation()">Terms &amp; Conditions</a>
               and
-              <a routerLink="/privacy" target="_blank">Privacy Policy</a>
+              <a routerLink="/privacy" (click)="$event.stopPropagation()">Privacy Policy</a>
               of FinishFino Cleaning Pros.
-            </label>
+            </div>
           </div>
           <span
             class="terms-error"
